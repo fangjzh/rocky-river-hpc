@@ -80,6 +80,8 @@ systemctl restart chronyd
 yum -y install ohpc-slurm-server
 cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf
 perl -pi -e "s/ControlMachine=\S+/ControlMachine=${sms_name}/" /etc/slurm/slurm.conf
+##
+perl -pi -e "s/JobCompType=jobcomp\/none/#JobCompType=jobcomp\/none/" /etc/slurm/slurm.conf
 ### slurm.conf need to be modified.
 
 
@@ -119,20 +121,26 @@ cp -p /etc/resolv.conf $CHROOT/etc/resolv.conf
 
 # copy credential files into $CHROOT to ensure consistent uid/gids for slurm/munge at
 # install. Note that these will be synchronized with future updates via the provisioning system.
- /bin/cp /etc/passwd /etc/group $CHROOT/etc
+/bin/cp /etc/passwd /etc/group $CHROOT/etc
+
 # Add Slurm client support meta-package and enable munge
- yum -y --installroot=$CHROOT install ohpc-slurm-client
- chroot $CHROOT systemctl enable munge
+yum -y --installroot=$CHROOT install ohpc-slurm-client
+chroot $CHROOT systemctl enable munge  ###there is an error!!!
+
 # Register Slurm server with computes (using "configless" option)
- echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > $CHROOT/etc/sysconfig/slurmd
+echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > $CHROOT/etc/sysconfig/slurmd
+
 # Add Network Time Protocol (NTP) support
- yum -y --installroot=$CHROOT install chrony
+yum -y --installroot=$CHROOT install chrony
+
 # Identify master host as local NTP server
- echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
+echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
+
 # Add kernel drivers (matching kernel version on SMS node)
- yum -y --installroot=$CHROOT install kernel-`uname -r`
+yum -y --installroot=$CHROOT install kernel-`uname -r`
+
 # Include modules user environment
- yum -y --installroot=$CHROOT install lmod-ohpc
+yum -y --installroot=$CHROOT install lmod-ohpc
  
 ####### initialize warewulf database and ssh_keys###
 wwinit database 
@@ -229,10 +237,12 @@ yum -y install EasyBuild-ohpc
 yum -y install gnu9-compilers-ohpc
 yum -y install mpich-ucx-gnu9-ohpc
 yum -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc
-
+####
+yum -y install lmod-defaults-gnu9-openmpi4-ohpc
 
 ######
 ## moldify the /etc/slurm/slurm.conf
+## change node name, cpu number, slots et.al.
 ################
 
 ###start slurm###
