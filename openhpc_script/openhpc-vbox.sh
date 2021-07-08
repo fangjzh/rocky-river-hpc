@@ -125,7 +125,8 @@ cp -p /etc/resolv.conf $CHROOT/etc/resolv.conf
 
 # Add Slurm client support meta-package and enable munge
 yum -y --installroot=$CHROOT install ohpc-slurm-client
-chroot $CHROOT systemctl enable munge  ###there is an error!!!
+chroot $CHROOT systemctl enable munge  
+chroot $CHROOT systemctl enable slurmd
 
 # Register Slurm server with computes (using "configless" option)
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > $CHROOT/etc/sysconfig/slurmd
@@ -251,6 +252,8 @@ systemctl enable slurmctld
 systemctl start munge
 systemctl start slurmctld
 
+##pdsh -w cnode0[1-2] systemctl enable munge
+##pdsh -w cnode0[1-2] systemctl enable slurmd
 pdsh -w cnode01 systemctl start munge
 pdsh -w cnode01 systemctl start slurmd
 
