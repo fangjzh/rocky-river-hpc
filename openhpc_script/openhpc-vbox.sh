@@ -257,5 +257,21 @@ systemctl start slurmctld
 pdsh -w cnode01 systemctl start munge
 pdsh -w cnode01 systemctl start slurmd
 
+#####install intel one api########
+###extract and install#
+./l_BaseKit_p_2021.3.0.3219_offline.sh -x 
+cd l_BaseKit_p_2021.3.0.3219_offline
+./install.sh --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
 
+./l_HPCKit_p_2021.3.0.3230_offline.sh -x
+cd l_HPCKit_p_2021.3.0.3230_offline
+./install.sh --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
+
+#the pacakge is installed as big as 22G, uninstaller is in /opt/intel##
+## how to make module###
+/opt/ohpc/pub/apps/intel/modulefiles-setup.sh
+
+##export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles
+## also can add in /etc/profile.d/lmod.sh
+export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/compiler/latest/modulefiles:/opt/ohpc/pub/apps/intel/mkl/latest/modulefiles:/opt/ohpc/pub/apps/intel/mpi/latest/modulefiles:/opt/ohpc/pub/apps/intel/tbb/latest/modulefiles
 
