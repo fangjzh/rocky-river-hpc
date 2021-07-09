@@ -34,14 +34,22 @@ pacakge_source_dir=/mnt/media/xxx
 package_dir=/root/package
 mkdir ${package_dir}
 cp  ${pacakge_source_dir}/Rocky-8.4-x86_64-dvd1.iso   ${package_dir}/
+cp  ${pacakge_source_dir}/epel.tar  ${package_dir}/
+cp  ${pacakge_source_dir}/RockyOs.tgz  ${package_dir}/
+
 cp  ${pacakge_source_dir}/OpenHPC-2.3.CentOS_8.x86_64.tar  ${package_dir}/
 mkdir -p ${package_dir}/xcat
 cp  ${pacakge_source_dir}/xcat/xcat-dep-2.16.2-linux.tar.bz2 ${package_dir}/xcat
 cp  ${pacakge_source_dir}/xcat/xcat-core-2.16.2-linux.tar.bz2 ${package_dir}/xcat
-cp  ${pacakge_source_dir}/epel_repo.tar  ${package_dir}/
+
 cp  ${pacakge_source_dir}/Rocky-local.repo ${package_dir}/
 cp  ${pacakge_source_dir}/env_tmp.sh ${package_dir}/
 cp  ${pacakge_source_dir}/job.sh ${package_dir}/
+
+cp  ${pacakge_source_dir}/l_BaseKit_p_2021.3.0.3219_offline.sh  ${package_dir}/
+cp  ${pacakge_source_dir}/l_HPCKit_p_2021.3.0.3230_offline.sh   ${package_dir}/
+
+cp ${pacakge_source_dir}/lammps   ${package_dir}/
 
 cd ${package_dir}
 ###
@@ -54,6 +62,11 @@ mkdir -p /root/iso_mnt
 mount -o loop ${package_dir}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
 cp -r /root/iso_mnt/*  /opt/repo/rocky
 cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
+tar -xvf ${package_dir}/epel.tar -C /opt/repo/rocky
+tar -xvzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
+mv /opt/repo/rocky/RockyOs/* /opt/repo/rocky
+rm -rf /opt/repo/rocky/RockyOs
+
 cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
 
 mkdir -p /opt/repo/openhpc
