@@ -224,9 +224,11 @@ lsdef -t osimage ${image_choose}
 ## if osimage def is not ok
 ##chdef -t osimage  ${image_choose} pkglist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.pkglist exlist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.exlist
 # Save chroot location for compute image
-export CHROOT=/install/netboot/rocky8.4/x86_64/compute
-# Build initial chroot image
-genimage ${image_choose}
+export CHROOT=/install/netboot/rocky8.4/x86_64/compute/rootimg
+
+### is this unnecessory???##
+### Build initial chroot image
+ genimage ${image_choose}
 
 
 #rmimage centos8.4-x86_64-netboot-compute 
@@ -235,15 +237,11 @@ genimage ${image_choose}
 ######## add hpc components to computenode image
 ###################################################
 
-##### enable local source ####
-export YUM_MIRROR=/opt/repo/rocky/BaseOS,/opt/repo/rocky/AppStream,/opt/repo/rocky/extras,/opt/repo/rocky/PowerTools,/opt/repo/rocky/epel
-
-
 ###copy repo conf into image###
 mkdir -p $CHROOT/etc/yum.repos.d/
-perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/opt_repo_rocky*.repo
-cp /etc/yum.repos.d/Rocky-local.repo /opt/ohpc/admin/images/rocky8.4/etc/yum.repos.d/Rocky-local.repo
-cp -p /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
+perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/*.repo
+/bin/cp /etc/yum.repos.d/Rocky-local.repo $CHROOT/etc/yum.repos.d/Rocky-local.repo
+/bin/cp  /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
 ###install software into image###
 yum -y --installroot=$CHROOT install ohpc-base-compute.x86_64
 # Disable firewall for computes
@@ -270,8 +268,10 @@ yum -y --installroot=$CHROOT install chrony
 echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
 
 # Add kernel drivers (matching kernel version on SMS node)
+image_choose=rocky8.4-x86_64-netboot-compute
 yum -y --installroot=$CHROOT install kernel
 genimage ${image_choose} -k `uname -r`
+
 # Include modules user environment
 yum -y --installroot=$CHROOT install lmod-ohpc
 
@@ -279,8 +279,8 @@ yum -y --installroot=$CHROOT install lmod-ohpc
 yum -y --installroot=$CHROOT install autofs
 chroot $CHROOT systemctl enable autofs
 
-# Install pacakge manager
-yum -y --installroot=$CHROOT install rpm-build yum
+# Install pacakge manager  ## for diskless yum is not needed
+## yum -y --installroot=$CHROOT install rpm-build yum
  
 
 ###### setup nfs #####
@@ -320,7 +320,7 @@ systemctl enable nfs-server
 yum -y install clustershell
 # Setup node definitions
 cd /etc/clustershell/groups.d
-mv local.cfg local.cfg.orig
+cat local.cfg > local.cfg.orig
 echo "adm: ${sms_name}" > local.cfg
 echo "compute: ${compute_prefix}0[1-3]" >> local.cfg   ####need to be modified
 echo "all: @adm,@compute" >> local.cfg
@@ -341,13 +341,14 @@ echo "account required pam_slurm.so" >> $CHROOT/etc/pam.d/sshd
 
 # Define path for xCAT synclist file
 mkdir -p /install/custom/netboot
+image_choose=rocky8.4-x86_64-netboot-compute
 chdef -t osimage -o ${image_choose} synclists="/install/custom/netboot/compute.synclist"
 # Add desired credential files to synclist
 echo "/etc/passwd -> /etc/passwd" > /install/custom/netboot/compute.synclist
 echo "/etc/group -> /etc/group" >> /install/custom/netboot/compute.synclist
-echo "/etc/shadow -> /etc/shadow" >> /install/custom/netboot/compute.synclis
+echo "/etc/shadow -> /etc/shadow" >> /install/custom/netboot/compute.synclist
 ##
-echo "/etc/munge/munge.key -> /etc/munge/munge.key" >>/install/custom/netboot/compute.synclis
+echo "/etc/munge/munge.key -> /etc/munge/munge.key" >>/install/custom/netboot/compute.synclist
 
 ### The “updatenode compute -F” command can be used to distribute changes made 
 ### to any defined synchro-nization files on the SMS host.  
@@ -439,7 +440,7 @@ cd l_HPCKit_p_2021.3.0.3230_offline
 
 echo 'export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' >> /etc/profile.d/lmod.sh
 
-## this command is not 
+## this command is ok 
 pdsh -w ${compute_prefix}0[1-2]  echo 'export MODULEPATH=\${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' \>\> /etc/profile.d/lmod.sh
 ## also can add in /etc/profile.d/lmod.sh
 ##export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/compiler/latest/modulefiles:/opt/ohpc/pub/apps/intel/mkl/latest/modulefiles:/opt/ohpc/pub/apps/intel/mpi/latest/modulefiles:/opt/ohpc/pub/apps/intel/tbb/latest/modulefiles
