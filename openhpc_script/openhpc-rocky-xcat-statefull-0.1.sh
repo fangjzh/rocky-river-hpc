@@ -225,8 +225,10 @@ lsdef -t osimage ${image_choose}
 ##chdef -t osimage  ${image_choose} pkglist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.pkglist exlist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.exlist
 # Save chroot location for compute image
 export CHROOT=/install/netboot/rocky8.4/x86_64/compute
-# Build initial chroot image
-genimage ${image_choose}
+
+### is this unnecessory???##
+### Build initial chroot image
+# genimage ${image_choose}
 
 
 #rmimage centos8.4-x86_64-netboot-compute 
@@ -235,15 +237,11 @@ genimage ${image_choose}
 ######## add hpc components to computenode image
 ###################################################
 
-##### enable local source ####
-export YUM_MIRROR=/opt/repo/rocky/BaseOS,/opt/repo/rocky/AppStream,/opt/repo/rocky/extras,/opt/repo/rocky/PowerTools,/opt/repo/rocky/epel
-
-
 ###copy repo conf into image###
 mkdir -p $CHROOT/etc/yum.repos.d/
-perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/opt_repo_rocky*.repo
-cp /etc/yum.repos.d/Rocky-local.repo /opt/ohpc/admin/images/rocky8.4/etc/yum.repos.d/Rocky-local.repo
-cp -p /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
+perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/*.repo
+/bin/cp /etc/yum.repos.d/Rocky-local.repo $CHROOT/etc/yum.repos.d/Rocky-local.repo
+/bin/cp  /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
 ###install software into image###
 yum -y --installroot=$CHROOT install ohpc-base-compute.x86_64
 # Disable firewall for computes
@@ -272,6 +270,7 @@ echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
 # Add kernel drivers (matching kernel version on SMS node)
 yum -y --installroot=$CHROOT install kernel
 genimage ${image_choose} -k `uname -r`
+
 # Include modules user environment
 yum -y --installroot=$CHROOT install lmod-ohpc
 

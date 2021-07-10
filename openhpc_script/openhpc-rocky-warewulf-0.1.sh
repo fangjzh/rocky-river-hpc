@@ -135,7 +135,7 @@ systemctl start tftp.socket
 
 #################
 
-####################################
+###########################################
 ######## build computenode image
 ###########################################
 
@@ -149,12 +149,13 @@ export CHROOT=/opt/ohpc/admin/images/rocky8.4
 wwmkchroot -v rocky-8 $CHROOT
 
 ###copy repo conf into image###
+mkdir -p $CHROOT/etc/yum.repos.d/
 perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/opt_repo_rocky*.repo
-cp /etc/yum.repos.d/Rocky-local.repo /opt/ohpc/admin/images/rocky8.4/etc/yum.repos.d/Rocky-local.repo
-cp -p /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
+/bin/cp /etc/yum.repos.d/Rocky-local.repo $CHROOT/etc/yum.repos.d/Rocky-local.repo
+/bin/cp /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
 ###install software into image###
 yum -y --installroot=$CHROOT install ohpc-base-compute.x86_64
-cp -p /etc/resolv.conf $CHROOT/etc/resolv.conf
+/bin/cp /etc/resolv.conf $CHROOT/etc/resolv.conf
 
 # copy credential files into $CHROOT to ensure consistent uid/gids for slurm/munge at
 # install. Note that these will be synchronized with future updates via the provisioning system.
@@ -330,7 +331,7 @@ cd l_HPCKit_p_2021.3.0.3230_offline
 
 echo 'export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' >> /etc/profile.d/lmod.sh
 
-## this command is not 
+## this command is ok 
 pdsh -w ${compute_prefix}0[1-2]  echo 'export MODULEPATH=\${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' \>\> /etc/profile.d/lmod.sh
 ## also can add in /etc/profile.d/lmod.sh
 ##export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/compiler/latest/modulefiles:/opt/ohpc/pub/apps/intel/mkl/latest/modulefiles:/opt/ohpc/pub/apps/intel/mpi/latest/modulefiles:/opt/ohpc/pub/apps/intel/tbb/latest/modulefiles
