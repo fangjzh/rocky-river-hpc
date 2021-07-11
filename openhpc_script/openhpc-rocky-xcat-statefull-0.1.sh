@@ -314,7 +314,7 @@ makedns -n
 
 # Associate desired provisioning image for computes
 nodeset compute osimage=${image_choose}
-
+## if u need to reinstall the node, use this command ##
 
 ####check xcat server########
 ## if something is not set ##
