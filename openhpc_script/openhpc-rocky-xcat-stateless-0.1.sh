@@ -23,7 +23,7 @@ export ipoib_netmask=255.255.255.0
 export c_ipoib_pre=10.0.1.1
 
 export compute_prefix=cnode
-export kargs=net.ifnames=1
+##export kargs=net.ifnames=1
 
 export iso_path=/root/package
 
@@ -73,7 +73,7 @@ mkdir -p /root/iso_mnt
 mount -o loop ${package_dir}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
 cp -r /root/iso_mnt/*  /opt/repo/rocky
 
-cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
+##cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
 
 tar -xvf ${package_dir}/epel.tar -C /opt/repo/rocky
 tar -xvzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
@@ -147,12 +147,6 @@ perl -pi -e "s/JobCompType=jobcomp\/none/#JobCompType=jobcomp\/none/" /etc/slurm
 ### slurm.conf need to be modified.
 
 ####start services#####
-##systemctl enable httpd.service
-##systemctl restart httpd
-##systemctl enable dhcpd.service
-
-systemctl enable tftp.socket
-systemctl start tftp.socket
 #################
 
 
@@ -181,7 +175,7 @@ systemctl start tftp.socket
 ########## add hack sulotion of rocky os support #######
 cd ${package_dir}
 tar -xvzf backup_xcat_hack.tgz
-/bin/cd backup_xcat_hack
+cd backup_xcat_hack
 cp -r install /opt/xcat/share/xcat/install/rocky 
 cp -r netboot /opt/xcat/share/xcat/netboot/rocky 
 /bin/cp ./discinfo.pm /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
@@ -224,14 +218,16 @@ lsdef -t osimage ${image_choose}
 ## if osimage def is not ok
 ##chdef -t osimage  ${image_choose} pkglist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.pkglist exlist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.exlist
 # Save chroot location for compute image
-export CHROOT=/install/netboot/rocky8.4/x86_64/compute/rootimg
+
 
 ### is this unnecessory???##
 ### Build initial chroot image
- genimage ${image_choose}
-
+# genimage ${image_choose}
+genimage ${image_choose} -k `uname -r`
 
 #rmimage centos8.4-x86_64-netboot-compute 
+
+export CHROOT=/install/netboot/rocky8.4/x86_64/compute/rootimg
 
 ###################################################
 ######## add hpc components to computenode image
@@ -268,9 +264,8 @@ yum -y --installroot=$CHROOT install chrony
 echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
 
 # Add kernel drivers (matching kernel version on SMS node)
-image_choose=rocky8.4-x86_64-netboot-compute
+# image_choose=rocky8.4-x86_64-netboot-compute
 yum -y --installroot=$CHROOT install kernel
-genimage ${image_choose} -k `uname -r`
 
 # Include modules user environment
 yum -y --installroot=$CHROOT install lmod-ohpc

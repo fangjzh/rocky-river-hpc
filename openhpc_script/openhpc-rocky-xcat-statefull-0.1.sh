@@ -1,5 +1,5 @@
 #!/bin/bash
-### 2021/07/09:  
+### 2021/07/11:  
 
 ### todo list #####
 ### devide this script in to functions and sub script
@@ -9,7 +9,7 @@
 
 
 export sms_name=cjhpc
-export sms_ip=10.0.0.2
+export sms_ip=10.0.0.3
 export sms_eth_internal=enp0s8
 export eth_provision=enp0s8
 export internal_netmask=255.255.255.0
@@ -23,7 +23,7 @@ export ipoib_netmask=255.255.255.0
 export c_ipoib_pre=10.0.1.1
 
 export compute_prefix=cnode
-export kargs=net.ifnames=1
+##export kargs=net.ifnames=1
 
 export iso_path=/root/package
 
@@ -73,14 +73,19 @@ mkdir -p /root/iso_mnt
 mount -o loop ${package_dir}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
 cp -r /root/iso_mnt/*  /opt/repo/rocky
 
-cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
+# for virmachine mount cdrom device
+# mkdir /mnt/cdrom
+# mount -t auto /dev/cdrom /mnt/cdrom
+# cp -r /mnt/cdrom/*  /opt/repo/rocky
+
+##cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
 
 tar -xvf ${package_dir}/epel.tar -C /opt/repo/rocky
 tar -xvzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
 mv /opt/repo/rocky/RockyOs/* /opt/repo/rocky
 rm -rf /opt/repo/rocky/RockyOs
 
-cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
+/bin/cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
 
 mkdir -p /opt/repo/openhpc
 tar -xvf ${package_dir}/OpenHPC-2.3.CentOS_8.x86_64.tar -C /opt/repo/openhpc
@@ -92,11 +97,22 @@ tar -xvjf ${package_dir}/xcat/xcat-core-2.16.2-linux.tar.bz2 -C /opt/repo/xcat
 /opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh
 /opt/repo/xcat/xcat-core/mklocalrepo.sh
 
+
 yum clean all
 yum makecache
 #######################
 
 
+### create repo file for compute node ###
+##package_dir=/root/package
+cat ${package_dir}/Rocky-local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' > /opt/repo/compute_node.repo
+echo "     " >> /opt/repo/compute_node.repo
+cat /etc/yum.repos.d/OpenHPC.local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
+echo "     " >> /opt/repo/compute_node.repo
+cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
+echo "     " >> /opt/repo/compute_node.repo
+cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
+echo "     " >> /opt/repo/compute_node.repo
 
 #########change server name#########
 echo ${sms_name} > /etc/hostname
@@ -146,14 +162,18 @@ perl -pi -e "s/ControlMachine=\S+/ControlMachine=${sms_name}/" /etc/slurm/slurm.
 perl -pi -e "s/JobCompType=jobcomp\/none/#JobCompType=jobcomp\/none/" /etc/slurm/slurm.conf
 ### slurm.conf need to be modified.
 
-####start services#####
-##systemctl enable httpd.service
-##systemctl restart httpd
-##systemctl enable dhcpd.service
 
-systemctl enable tftp.socket
-systemctl start tftp.socket
-#################
+cat >/etc/httpd/conf.d/repo.conf <<'EOF'
+AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
+<Directory "/opt/repo">
+    Options Indexes FollowSymLinks Includes MultiViews
+    AllowOverride None
+    Require all granted
+</Directory>
+EOF
+
+systemctl restart httpd
+
 
 
 #################  Build initial BOS image  ########################
@@ -181,7 +201,7 @@ systemctl start tftp.socket
 ########## add hack sulotion of rocky os support #######
 cd ${package_dir}
 tar -xvzf backup_xcat_hack.tgz
-/bin/cd backup_xcat_hack
+cd backup_xcat_hack
 cp -r install /opt/xcat/share/xcat/install/rocky 
 cp -r netboot /opt/xcat/share/xcat/netboot/rocky 
 /bin/cp ./discinfo.pm /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
@@ -197,7 +217,44 @@ cp -r netboot /opt/xcat/share/xcat/netboot/rocky
 /bin/cp ./Template.pm /opt/xcat/lib/perl/xCAT/Template.pm 
 /bin/cp ./Schema.pm /opt/xcat/lib/perl/xCAT/Schema.pm 
 systemctl restart xcatd
+cd ~
 #########################################################
+
+#### Install ClusterShell
+yum -y install clustershell
+# Setup node definitions
+cd /etc/clustershell/groups.d
+cat local.cfg > local.cfg.orig
+echo "adm: ${sms_name}" > local.cfg
+echo "compute: ${compute_prefix}0[1-3]" >> local.cfg   ####need to be modified
+echo "all: @adm,@compute" >> local.cfg
+cd ~
+######
+
+# Update memlock settings on master
+perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limits.conf
+perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
+
+# Disable /tftpboot and /install export entries
+perl -pi -e "s|/tftpboot|#/tftpboot|" /etc/exports
+perl -pi -e "s|/install|#/install|" /etc/exports
+### note: fsid should be uniq, if add dir###
+echo "/home *(rw,no_subtree_check,fsid=10,no_root_squash)" >> /etc/exports
+echo "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)" >> /etc/exports
+echo "/opt/repo *(ro,no_subtree_check,fsid=12)" >> /etc/exports
+exportfs -a
+systemctl restart nfs-server
+systemctl enable nfs-server
+
+
+
+
+
+
+
+
+
+
 
 #########################################################
 ##### remember three command : mkdef rmdef chdef lsdef ########
@@ -208,6 +265,10 @@ systemctl restart xcatd
 ####                                                #######
 ##copycds -p /installl/centos8.4/x86_64 -n=centos8.4 ${iso_path}/Rocky-8.4-x86_64-dvd1.iso 
 copycds  ${iso_path}/Rocky-8.4-x86_64-dvd1.iso
+
+## also can copy from dvd device 
+## copycds /dev/cdrom
+
 ### copycds will match .discinfo in the iso with /opt/xcat/lib/perl/xCAT/data/discinfo.pm
 ### then math the file name in /opt/xcat/share/xcat/netboot and /opt/xcat/share/xcat/install
 ### then generate the osimage rules
@@ -217,150 +278,12 @@ lsdef -t osimage   ### get the image names used by genimage
 #rmdef -t osimage centos8.4-x86_64-install-compute
 #rmdef -t osimage centos8.4-x86_64-statelite-compute
 
-image_choose=rocky8.4-x86_64-netboot-compute
+image_choose=rocky8.4-x86_64-install-compute
 
-##### get info 
-lsdef -t osimage ${image_choose}
-## if osimage def is not ok
-##chdef -t osimage  ${image_choose} pkglist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.pkglist exlist=/opt/xcat/share/xcat/netboot/rocky/compute.rocky8.exlist
-# Save chroot location for compute image
-export CHROOT=/install/netboot/rocky8.4/x86_64/compute
-
-### is this unnecessory???##
-### Build initial chroot image
-# genimage ${image_choose}
+###echo "autofs" >> /opt/xcat/share/xcat/install/rocky/compute.rocky8.pkglist
 
 
-#rmimage centos8.4-x86_64-netboot-compute 
-
-###################################################
-######## add hpc components to computenode image
-###################################################
-
-###copy repo conf into image###
-mkdir -p $CHROOT/etc/yum.repos.d/
-perl -pi -e "s/enabled=1/enabled=0/" $CHROOT/etc/yum.repos.d/*.repo
-/bin/cp /etc/yum.repos.d/Rocky-local.repo $CHROOT/etc/yum.repos.d/Rocky-local.repo
-/bin/cp  /etc/yum.repos.d/OpenHPC*.repo $CHROOT/etc/yum.repos.d
-###install software into image###
-yum -y --installroot=$CHROOT install ohpc-base-compute.x86_64
-# Disable firewall for computes
-chroot $CHROOT systemctl disable firewalld
-
-##cp -p /etc/resolv.conf $CHROOT/etc/resolv.conf
-
-# copy credential files into $CHROOT to ensure consistent uid/gids for slurm/munge at
-# install. Note that these will be synchronized with future updates via the provisioning system.
-/bin/cp /etc/passwd /etc/group $CHROOT/etc
-
-# Add Slurm client support meta-package and enable munge
-yum -y --installroot=$CHROOT install ohpc-slurm-client
-chroot $CHROOT systemctl enable munge  
-chroot $CHROOT systemctl enable slurmd
-
-# Register Slurm server with computes (using "configless" option)
-echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > $CHROOT/etc/sysconfig/slurmd
-
-# Add Network Time Protocol (NTP) support
-yum -y --installroot=$CHROOT install chrony
-
-# Identify master host as local NTP server
-echo "server ${sms_ip}" >> $CHROOT/etc/chrony.conf
-
-# Add kernel drivers (matching kernel version on SMS node)
-yum -y --installroot=$CHROOT install kernel
-genimage ${image_choose} -k `uname -r`
-
-# Include modules user environment
-yum -y --installroot=$CHROOT install lmod-ohpc
-
-# Install autofs 
-yum -y --installroot=$CHROOT install autofs
-chroot $CHROOT systemctl enable autofs
-
-# Install pacakge manager
-yum -y --installroot=$CHROOT install rpm-build yum
- 
-
-###### setup nfs #####
-#mkdir ${CHROOT}/opt/repo
-#echo "${sms_ip}:/home /home nfs nfsvers=3,nodev,nosuid 0 0" >> $CHROOT/etc/fstab
-#echo "${sms_ip}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0" >> $CHROOT/etc/fstab
-#echo "${sms_ip}:/opt/repo /opt/repo nfs nfsvers=3,nodev 0 0" >> $CHROOT/etc/fstab
-##autofs ##
-cat >${CHROOT}/etc/auto.master<<'EOF'
-/-     /etc/auto.pub  --timeout=1200
-/-     /etc/auto.repo  --timeout=1200
-/home  /etc/auto.home   --timeout=1200
-EOF
-echo "/opt/ohpc/pub        ${sms_ip}:/opt/ohpc/pub" > ${CHROOT}/etc/auto.pub
-echo "/opt/repo        ${sms_ip}:/opt/repo" > ${CHROOT}/etc/auto.repo
-echo "*    ${sms_ip}:/home/&" > ${CHROOT}/etc/auto.home
-
-# Disable /tftpboot and /install export entries
-perl -pi -e "s|/tftpboot|#/tftpboot|" /etc/exports
-perl -pi -e "s|/install|#/install|" /etc/exports
-
-### note to fsid, if add dir###
-echo "/home *(rw,no_subtree_check,fsid=10,no_root_squash)" >> /etc/exports
-echo "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)" >> /etc/exports
-echo "/opt/repo *(ro,no_subtree_check,fsid=12)" >> /etc/exports
-exportfs -a
-systemctl restart nfs-server
-systemctl enable nfs-server
-
-#### i think it be conflict with chrony ####
-# Enable NTP time service on computes and identify master host as local NTP server
-# chroot$CHROOT systemctl enable ntpd
-# echo "server${sms_ip}" >>$CHROOT/etc/ntp.conf
-###
-
-#### Install ClusterShell
-yum -y install clustershell
-# Setup node definitions
-cd /etc/clustershell/groups.d
-mv local.cfg local.cfg.orig
-echo "adm: ${sms_name}" > local.cfg
-echo "compute: ${compute_prefix}0[1-3]" >> local.cfg   ####need to be modified
-echo "all: @adm,@compute" >> local.cfg
-cd ~
-######
-
-# Update memlock settings on master
-perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limits.conf
-perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
-# Update memlock settings within compute image
-perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' $CHROOT/etc/security/limits.conf
-perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' $CHROOT/etc/security/limits.conf
-#####
-
-# Enable ssh control via resource manager
-echo "account required pam_slurm.so" >> $CHROOT/etc/pam.d/sshd
-
-
-# Define path for xCAT synclist file
-mkdir -p /install/custom/netboot
-chdef -t osimage -o ${image_choose} synclists="/install/custom/netboot/compute.synclist"
-# Add desired credential files to synclist
-echo "/etc/passwd -> /etc/passwd" > /install/custom/netboot/compute.synclist
-echo "/etc/group -> /etc/group" >> /install/custom/netboot/compute.synclist
-echo "/etc/shadow -> /etc/shadow" >> /install/custom/netboot/compute.synclis
-##
-echo "/etc/munge/munge.key -> /etc/munge/munge.key" >>/install/custom/netboot/compute.synclis
-
-### The “updatenode compute -F” command can be used to distribute changes made 
-### to any defined synchro-nization files on the SMS host.  
-
-
-###Finalizing provisioning configuration
-packimage ${image_choose}
-
-#################################################################################################
-#################################################################################################
-
-######add password to compute-node###
-####chtab key=system passwd.username=root passwd.password=Xabc123456
-
+chtab key=system passwd.username=root passwd.password=`openssl rand -base64 12`
 
 
 ###add compute node###
@@ -397,6 +320,122 @@ nodeset compute osimage=${image_choose}
 ## if something is not set ##
 ##xcatprobe xcatmn 
 ###xcatprobe xcatmn -i ${sms_eth_internal}
+
+
+## boot compute-node ###
+### Waiting for the installation process ####
+
+
+##############################################################################
+#########################################################################
+##############################################################################
+## now add components to cnode02-node
+export sms_ip=10.0.0.3
+export pacakge_dir=/root/
+
+psh cnode02 perl -pi -e '"s/enabled=1/enabled=0/"' /etc/yum.repos.d/\*.repo
+psh cnode02 wget -O /etc/yum.repos.d/compute_node.repo http://${sms_ip}:80//opt/repo/compute_node.repo
+psh cnode02 yum clean all
+
+
+###install software into cnode02 node ###
+psh cnode02 yum -y install ohpc-base-compute.x86_64
+# Disable firewall for cnode02s
+psh cnode02 systemctl disable firewalld
+
+#####install module environment #####
+psh cnode02 yum -y install lmod-ohpc
+
+# Add Slurm client support meta-package
+psh cnode02 yum -y install munge ohpc-slurm-client
+psh cnode02 systemctl  enable munge 
+psh cnode02 systemctl  enable slurmd
+psh cnode02 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" \> /etc/sysconfig/slurmd
+
+
+# Add Network Time Protocol (NTP) support
+psh cnode02 yum -y  install chrony
+psh cnode02 systemctl enable chronyd
+# Identify master host as local NTP server
+##cd ${package_dir}
+##echo "server ${sms_ip}" > ./chrony.conf
+##pscp ./chrony.conf cnode02:/etc/
+psh cnode02  echo "server ${sms_ip}" \>\> /etc/chrony.conf
+
+##################### add autofs #################################
+psh cnode02 yum -y install autofs
+psh cnode02 systemctl enable autofs
+
+##autofs ##
+# pacakge_dir=/root/package
+cd ${package_dir}
+cat >./auto.master<<'EOF'
+/-     /etc/auto.pub  --timeout=1200
+/-     /etc/auto.repo  --timeout=1200
+/home  /etc/auto.home   --timeout=1200
+EOF
+echo "/opt/ohpc/pub        ${sms_ip}:/opt/ohpc/pub" > ./auto.pub
+echo "/opt/repo        ${sms_ip}:/opt/repo" > ./auto.repo
+echo "*    ${sms_ip}:/home/&" > ./auto.home
+
+
+## scp file , cnode02 is node group ##
+pscp ./auto.* cnode02:/etc/
+##################### add autofs  end #################################
+
+
+# Update memlock settings within cnode02 image, this is not wort with psh 
+psh cnode02 perl -pi -e "'s/# End of file/\* soft memlock unlimited\n$&/s'" /etc/security/limits.conf
+psh cnode02 perl -pi -e "'s/# End of file/\* hard memlock unlimited\n$&/s'" /etc/security/limits.conf
+#####
+
+# Enable ssh control via resource manager
+psh cnode02  echo "account required pam_slurm.so" \>\> /etc/pam.d/sshd
+
+###### reboot the cnode02 node ####
+######        the cnode02 node ####
+######            cnode02 node ####
+######                    node ####
+######                         ####
+
+## xdcp cnode02 /etc/slurm/slurm.conf /etc/slurm/slurm.conf
+xdcp cnode02 /etc/munge/munge.key /etc/munge/munge.key
+
+#
+# Create a sync file for pushing user credentials to the nodes
+echo "MERGE:" > syncusers
+echo "/etc/passwd -> /etc/passwd" >> syncusers
+echo "/etc/group -> /etc/group" >> syncusers
+echo "/etc/shadow -> /etc/shadow" >> syncusers
+# Use xCAT to distribute credentials to nodes
+xdcp cnode02 -F syncusers
+
+
+###  the 2nd way to sync users ####
+##  # Define path for xCAT synclist file
+##  mkdir -p /install/custom/install
+##  image_choose=rocky8.4-x86_64-install-compute
+##  chdef -t osimage -o ${image_choose} synclists="/install/custom/install/compute.synclist"
+##  # Add desired credential files to synclist
+##  echo "/etc/passwd -> /etc/passwd" > /install/custom/install/compute.synclist
+##  echo "/etc/group -> /etc/group" >> /install/custom/install/compute.synclist
+##  echo "/etc/shadow -> /etc/shadow" >> /install/custom/install/compute.synclist
+##  ##
+##  echo "/etc/munge/munge.key -> /etc/munge/munge.key" >>/install/custom/install/compute.synclist
+
+## when unsers are added , execute the command 
+## updatenode cnode02 -F
+###  updatenode compute -F
+
+### The “updatenode compute -F” command can be used to distribute changes made 
+### to any defined synchro-nization files on the SMS host.  
+
+##############################################################################
+#########################################################################
+##############################################################################
+
+
+
 
 
 
@@ -438,7 +477,7 @@ cd l_HPCKit_p_2021.3.0.3230_offline
 
 echo 'export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' >> /etc/profile.d/lmod.sh
 
-## this command is not 
+## this command is ok 
 pdsh -w ${compute_prefix}0[1-2]  echo 'export MODULEPATH=\${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' \>\> /etc/profile.d/lmod.sh
 ## also can add in /etc/profile.d/lmod.sh
 ##export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/compiler/latest/modulefiles:/opt/ohpc/pub/apps/intel/mkl/latest/modulefiles:/opt/ohpc/pub/apps/intel/mpi/latest/modulefiles:/opt/ohpc/pub/apps/intel/tbb/latest/modulefiles
@@ -461,8 +500,8 @@ systemctl start slurmctld
 
 ##pdsh -w cnode0[1-2] systemctl enable munge
 ##pdsh -w cnode0[1-2] systemctl enable slurmd
-pdsh -w cnode01 systemctl start munge
-pdsh -w cnode01 systemctl start slurmd
+pdsh -w cnode02 systemctl start munge
+pdsh -w cnode02 systemctl start slurmd
 
 
 

@@ -23,7 +23,7 @@ export ipoib_netmask=255.255.255.0
 export c_ipoib_pre=10.0.1.1
 
 export compute_prefix=cnode
-export kargs=net.ifnames=1
+##export kargs=net.ifnames=1
 
 export CHROOT=/opt/ohpc/admin/images/rocky8.4
 
@@ -67,7 +67,7 @@ tar -xvzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
 mv /opt/repo/rocky/RockyOs/* /opt/repo/rocky
 rm -rf /opt/repo/rocky/RockyOs
 
-cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
+/bin/cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
 
 mkdir -p /opt/repo/openhpc
 tar -xvf ${package_dir}/OpenHPC-2.3.CentOS_8.x86_64.tar -C /opt/repo/openhpc
