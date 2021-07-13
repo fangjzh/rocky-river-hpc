@@ -24,13 +24,14 @@ echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 # Add Network Time Protocol (NTP) support
 yum -y  install chrony
 systemctl enable chronyd
+systemctl start chronyd
 # Identify master host as local NTP server
 echo "server ${sms_ip}" >> /etc/chrony.conf
 
 ##################### add autofs #################################
 yum -y install autofs
 systemctl enable autofs
-
+systemctl start autofs
 ##autofs ##
 cat >/etc/auto.master<<'EOF'
 /-     /etc/auto.pub  --timeout=1200
@@ -48,3 +49,4 @@ perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limi
 
 # Enable ssh control via resource manager
 echo "account required pam_slurm.so" >> /etc/pam.d/sshd
+systemctl restart sshd
