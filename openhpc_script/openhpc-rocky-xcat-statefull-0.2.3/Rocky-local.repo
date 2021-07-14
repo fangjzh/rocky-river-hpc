@@ -1,0 +1,34 @@
+# Rocky-local.repo
+#
+# You can use this repo to install items directly off the installation local.
+# Verify your mount point matches one of the below file:// paths.
+
+[local-baseos]
+name=Rocky Linux $releasever - local - BaseOS
+baseurl=file:///opt/repo/rocky/BaseOS
+gpgcheck=0
+enabled=1
+
+[local-appstream]
+name=Rocky Linux $releasever - local - AppStream
+baseurl=file:///opt/repo/rocky/AppStream
+gpgcheck=0
+enabled=1
+
+[local-extras]
+name=Rocky Linux $releasever - local - Extras
+baseurl=file:///opt/repo/rocky/extras
+gpgcheck=0
+enabled=1
+
+[local-powertools]
+name=Rocky Linux $releasever - local - PowerTools
+baseurl=file:///opt/repo/rocky/PowerTools
+gpgcheck=0
+enabled=1
+
+[local-epel]
+name=Rocky Linux $releasever - local - epel
+baseurl=file:///opt/repo/rocky/epel
+gpgcheck=0
+enabled=1
