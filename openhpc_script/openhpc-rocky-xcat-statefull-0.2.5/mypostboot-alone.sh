@@ -15,6 +15,8 @@ echo ${node_name} > /etc/hostname
 echo "${node_ip}  ${node_name}  ${node_name}.${domain_name}" >>/etc/hosts
 nmcli g hostname ${node_name}
 
+###disable ipv6####
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
 
 #########set internal interface####
 nmcli conn mod ${node_eth_internal} ipv4.address ${node_ip}/${internal_netmask_l}

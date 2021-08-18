@@ -153,6 +153,9 @@ sed -i 's/domain_name=local/domain_name='${domain_name}'/' ${package_dir}/mypost
 chmod +x /install/postscripts/mypostboot
 
 
+###disable ipv6####
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
 
 ######set ntp server########
 yum -y -q install chrony
