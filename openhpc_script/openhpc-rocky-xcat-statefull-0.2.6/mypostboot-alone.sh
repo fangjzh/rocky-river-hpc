@@ -131,3 +131,21 @@ systemctl restart rpcbind ypbind
 
 ####
 echo "install finished!  config ssh-keygen; add master pub key to authorized_keys in .ssh/;  chmod 600"
+
+
+
+#### install n9e-agentd
+sleep 2
+
+mkdir -p /opt/n9e
+cd /opt/n9e
+##wget 116.85.64.82/n9e-agentd-5.0.0-rc8.tar.gz
+wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
+tar zxvf n9e-agentd-5.0.0-rc8.tar.gz
+perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
+
+cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable n9e-agentd
+systemctl restart n9e-agentd
+##systemctl status n9e-agentd

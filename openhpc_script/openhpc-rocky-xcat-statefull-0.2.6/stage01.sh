@@ -13,7 +13,6 @@ fi
 #### check files ###
 filelist=(
 backup_xcat_hack.tgz
-env.sh
 epel.tar
 l_BaseKit_p_2021.3.0.3219_offline.sh
 l_HPCKit_p_2021.3.0.3230_offline.sh
@@ -22,11 +21,6 @@ OpenHPC-2.3.CentOS_8.x86_64.tar
 Rocky-8.4-x86_64-dvd1.iso
 Rocky-local.repo
 RockyOs.tgz
-stage01.sh
-stage02.sh
-stage03.sh
-stage04.sh
-stage05.sh
 xcat/xcat-core-2.16.2-linux.tar.bz2  
 xcat/xcat-dep-2.16.2-linux.tar.bz2
 )
@@ -40,6 +34,20 @@ fi
 done
 
 ###source ./env.sh
+
+#########set internal interface####
+nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
+nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
+nmcli conn mod ${sms_eth_internal} ipv4.dns ${sms_ip}
+nmcli conn mod ${sms_eth_internal} ipv4.method manual
+nmcli conn up ${sms_eth_internal}
+
+if [ $? != 0 ]; then
+echo "network error!"
+exit
+fi
+
+
 
 ###make local repo####
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
@@ -105,18 +113,6 @@ echo "${sms_ip}  ${sms_name}  ${sms_name}.${domain_name}" >>/etc/hosts
 nmcli g hostname ${sms_name}
 
 
-#########set internal interface####
-nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
-nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
-nmcli conn mod ${sms_eth_internal} ipv4.dns ${sms_ip}
-nmcli conn mod ${sms_eth_internal} ipv4.method manual
-nmcli conn up ${sms_eth_internal}
-
-if [ $? != 0 ]; then
-echo "network error!"
-exit
-fi
-
 ########disable firewall#####
 systemctl disable firewalld
 systemctl stop firewalld
@@ -176,6 +172,60 @@ perl -pi -e 's/PartitionName=/##PartitionName=/' /etc/slurm/slurm.conf
 systemctl enable munge
 systemctl enable slurmctld
 ### slurm.conf need to be modified.
+
+### install sql
+yum -y -q install mariadb*
+# 假设机器的/home分区是个SSD的大分区，datadir设置为/home/mysql
+# mkdir -p /home/mysql
+# chown mysql:mysql /home/mysql
+# sed -i '/^datadir/s/^.*$/datadir=\/home\/mysql/g' /etc/my.cnf
+# 启动mysql进程
+systemctl start mariadb.service
+# 将mysql设置为开机自启动
+systemctl enable mariadb.service
+# 设置mysql root密码
+mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('78g*tw23.ysq');"
+# 添加slurmdb 数据库用户
+mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"REVOKE ALL PRIVILEGES ON *.* FROM 'slurmdb'@'localhost';"
+mysql -uroot -p'78g*tw23.ysq' -e"CERATE DATABASE slurm_acct_db;"
+mysql -uroot -p'78g*tw23.ysq' -e"CERATE DATABASE slurm_jobcomp_db;"
+mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'${sms_name}' IDENTIFIED BY 'slurmdb123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurmdb'@'${sms_name}' IDENTIFIED BY 'slurmdb123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"FLUSH PRIVILEGES"
+
+## 配置slurmdb
+systemctl enable slurmdbd
+/bin/cp /etc/slurm/slurmdbd.conf.example /etc/slurm/slurmdbd.conf
+perl -pi -e "s/StoragePass=\S+/StoragePass=slurmdb123456/" /etc/slurm/slurmdbd.conf
+perl -pi -e "s/StorageUser=\S+/StorageUser=slurmdb/" /etc/slurm/slurmdbd.conf
+perl -pi -e "s/DbdAddr=localhost/DbdAddr=${sms_ip}/" /etc/slurm/slurmdbd.conf
+perl -pi -e "s/DbdHost=localhost/DbdHost=${sms_name}/" /etc/slurm/slurmdbd.conf
+
+
+chown slurm.slurm /etc/slurm/slurmdbd.conf
+mkdir -p /var/log/slurm
+systemctl start slurmdbd
+
+chown slurm.root /etc/slurm/slurm.conf
+chmod 660 /etc/slurm/slurm.conf
+perl -pi -e "s/#AccountingStorageHost=/AccountingStorageHost=${sms_name}/"   /etc/slurm/slurm.conf       #指明slurndbd的hostname
+perl -pi -e "s/AccountingStorageHost/\nAccountingStoragePort=6819\nAccountingStorageHost/"    /etc/slurm/slurm.conf         #使用的端口，默认6819
+perl -pi -e "s/#AccountingStorageType=\S+/AccountingStorageType=accounting_storage\/slurmdbd/"   /etc/slurm/slurm.conf    #使用slurmdbd收集信息
+#perl -pi -e "s/#AccountingStorageLoc=/AccountingStorageLoc=\/var\/log\/slurm\/slurm_jobcomp.log/" /etc/slurm/slurm.conf
+#perl -pi -e "s/#AccountingStoragePass=/AccountingStoragePass=slurmdb123456/" /etc/slurm/slurm.conf
+#perl -pi -e "s/#AccountingStorageUser=/AccountingStorageUser=slurmdb/" /etc/slurm/slurm.conf
+
+
+perl -pi -e "s/#JobCompType/JobCompHost=${sms_name}\n#JobCompType/"     /etc/slurm/slurm.conf            #安装mysql的hostname
+perl -pi -e "s/#JobCompLoc=/JobCompLoc=\/var\/log\/slurm\/slurm_jobcomp.log/"  /etc/slurm/slurm.conf   #日志信息
+perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPass=slurmdb123456/"    /etc/slurm/slurm.conf    #mysql密码
+perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPort=3306/"   /etc/slurm/slurm.conf      #mysql端口
+perl -pi -e "s/JobCompType=\S+/JobCompType=jobcomp\/mysql/"   /etc/slurm/slurm.conf      #使用mysql记录完成的任务信息
+perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompUser=slurmdb/"    /etc/slurm/slurm.conf     #mysql用户
+
 
 ### add http repo for compute nodes 
 cat >/etc/httpd/conf.d/repo.conf <<'EOF'
