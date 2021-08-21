@@ -117,6 +117,10 @@ echo "network error!"
 exit
 fi
 
+###设置时区###
+# timedatectl list-timezones
+timedatectl set-timezone Asia/Shanghai
+
 ########disable firewall#####
 systemctl disable firewalld
 systemctl stop firewalld
