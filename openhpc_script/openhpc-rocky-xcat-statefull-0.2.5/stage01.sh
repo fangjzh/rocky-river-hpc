@@ -17,16 +17,10 @@ env.sh
 epel.tar
 l_BaseKit_p_2021.3.0.3219_offline.sh
 l_HPCKit_p_2021.3.0.3230_offline.sh
-mypostboot.bash
 OpenHPC-2.3.CentOS_8.x86_64.tar
 Rocky-8.4-x86_64-dvd1.iso
 Rocky-local.repo
 RockyOs.tgz
-stage01.sh
-stage02.sh
-stage03.sh
-stage04.sh
-stage05.sh
 xcat/xcat-core-2.16.2-linux.tar.bz2  
 xcat/xcat-dep-2.16.2-linux.tar.bz2
 )
@@ -150,10 +144,14 @@ chdef -t site domain=${domain_name}
 
 
 #########  add postbootscripts ####
-sed -i 's/10.0.0.1/'${sms_ip}'/' ${package_dir}/mypostboot.bash
-sed -i 's/sms_name=cjhpc/sms_name='${sms_name}'/' ${package_dir}/mypostboot.bash
-sed -i 's/domain_name=local/domain_name='${domain_name}'/' ${package_dir}/mypostboot.bash
-/bin/cp ${package_dir}/mypostboot.bash /install/postscripts/mypostboot
+if [ ! -e ./mypostboot.bash ] ; then
+  echo "./mypostboot.bash is not exist!!!"
+  exit
+fi
+/bin/cp ./mypostboot.bash /install/postscripts/mypostboot
+sed -i 's/10.0.0.1/'${sms_ip}'/' /install/postscripts/mypostboot
+sed -i 's/sms_name=cjhpc/sms_name='${sms_name}'/' /install/postscripts/mypostboot
+sed -i 's/domain_name=local/domain_name='${domain_name}'/' /install/postscripts/mypostboot
 chmod +x /install/postscripts/mypostboot
 
 
@@ -163,13 +161,15 @@ sysctl -p /etc/sysctl.conf
 
 ######set ntp server########
 yum -y -q install chrony
-systemctl enable chronyd.service       
-echo "server ${sms_name}" >> /etc/chrony.conf
-echo "allow all" >> /etc/chrony.conf   
+systemctl enable chronyd.service
+echo "server ntp1.aliyun.com iburst " >> /etc/chrony.conf 
+echo "server ntp.ntsc.ac.cn iburst" >> /etc/chrony.conf
+echo "allow ${sms_ip}/${internal_netmask_l}" >> /etc/chrony.conf   
+perl -pi -e "s/#local\ stratum/local\ stratum/" /etc/chrony.conf   
 systemctl restart chronyd 
 
 #### install slurm ######
-yum -y -q install munge ohpc-slurm-server  
+yum -y -q install mailx munge ohpc-slurm-server  
 /bin/cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf
 ###start slurm###
 perl -pi -e "s/ControlMachine=\S+/ControlMachine=${sms_name}/" /etc/slurm/slurm.conf

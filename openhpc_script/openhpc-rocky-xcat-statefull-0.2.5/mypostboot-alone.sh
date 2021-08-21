@@ -82,12 +82,14 @@ systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 
 
+timedatectl set-timezone Asia/Shanghai
 # Add Network Time Protocol (NTP) support
-yum -y -q install chrony
-systemctl enable chronyd
-# Identify master host as local NTP server
-echo "server ${sms_ip}" >> /etc/chrony.conf
-systemctl restart chronyd
+##### it has been listed in /opt/xcat/share/xcat/install/rocky/compute.rocky8.pkglist
+# yum -y  install chrony
+# systemctl enable chronyd
+# # Identify master host as local NTP server
+# echo "server ${sms_ip} iburst" >> /etc/chrony.conf
+# systemctl restart chronyd
 
 ##################### add autofs #################################
 yum -y -q install nfs-utils autofs
