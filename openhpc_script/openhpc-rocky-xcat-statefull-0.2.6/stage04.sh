@@ -102,5 +102,10 @@ systemctl enable n9e-agentd
 systemctl restart n9e-agentd
 ##systemctl status n9e-agentd
 
+### recover prometheus ###
+# systemctl stop n9e-agentd.service
+# rm -rf /opt/prometheus/data/chunks_head/* 
+# rm -rf /opt/prometheus/data/wal/*
+# systemctl start n9e-agentd.service
 
 echo "boot and wait the compute node install before stage 05!"

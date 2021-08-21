@@ -18,7 +18,7 @@ systemctl disable firewalld
 echo "nameserver ${sms_ip}" >> /etc/resolv.conf
 
 ###install software into ${nodename} node ###
-yum -y install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
+yum -y -q install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
 
 systemctl  enable munge 
 systemctl  enable slurmd
@@ -35,7 +35,7 @@ timedatectl set-timezone Asia/Shanghai
 # systemctl restart chronyd
 
 ##################### add autofs #################################
-yum -y install autofs
+yum -y -q install autofs
 systemctl enable autofs
 
 ##autofs ##

@@ -153,6 +153,11 @@ echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=24:00:00 State=UP
 systemctl start munge
 systemctl start slurmctld
 
+### enable slurmd in sms 
+yum -y -q install ohpc-slurm-client
+#systemctl  enable slurmd
+echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
+
 ### add http repo for compute nodes 
 cat >/etc/httpd/conf.d/repo.conf <<'EOF'
 AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
