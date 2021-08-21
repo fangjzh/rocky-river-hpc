@@ -25,12 +25,14 @@ systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 
 
+timedatectl set-timezone Asia/Shanghai
 # Add Network Time Protocol (NTP) support
-yum -y  install chrony
-systemctl enable chronyd
-# Identify master host as local NTP server
-echo "server ${sms_ip}" >> /etc/chrony.conf
-systemctl restart chronyd
+##### it has been listed in /opt/xcat/share/xcat/install/rocky/compute.rocky8.pkglist
+# yum -y  install chrony
+# systemctl enable chronyd
+# # Identify master host as local NTP server
+# echo "server ${sms_ip} iburst" >> /etc/chrony.conf
+# systemctl restart chronyd
 
 ##################### add autofs #################################
 yum -y install autofs
@@ -80,7 +82,8 @@ mkdir -p /opt/n9e
 cd /opt/n9e
 ##wget 116.85.64.82/n9e-agentd-5.0.0-rc8.tar.gz
 wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
-tar zxvf n9e-agentd-5.0.0-rc8.tar.gz
+tar zxf n9e-agentd-5.0.0-rc8.tar.gz
+rm -f n9e-agentd-5.0.0-rc8.tar.gz
 
 perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
 /bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/

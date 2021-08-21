@@ -1,40 +1,6 @@
 #!/bin/sh
 source ./env.sh
 
-echo " ## user define " >> /root/.bashrc
-echo "unset command_not_found_handle" >> /root/.bashrc
-source /root/.bashrc
-
-if [ $? != 0 ]; then
-echo "no env.sh find. error!"
-exit
-fi
-
-#### check files ###
-filelist=(
-backup_xcat_hack.tgz
-epel.tar
-l_BaseKit_p_2021.3.0.3219_offline.sh
-l_HPCKit_p_2021.3.0.3230_offline.sh
-mypostboot.bash
-OpenHPC-2.3.CentOS_8.x86_64.tar
-Rocky-8.4-x86_64-dvd1.iso
-Rocky-local.repo
-RockyOs.tgz
-xcat/xcat-core-2.16.2-linux.tar.bz2  
-xcat/xcat-dep-2.16.2-linux.tar.bz2
-)
-
-for ifile in ${filelist[@]}
-do
-  if [ ! -e ${package_dir}/${ifile} ] ; then
-  echo "${ifile} is not exist!!!"
-  exit
-fi
-done
-
-###source ./env.sh
-
 #########set internal interface####
 nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
 nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
@@ -50,64 +16,9 @@ fi
 ###设置时区###
 # timedatectl list-timezones
 timedatectl set-timezone Asia/Shanghai
-
-###make local repo####
-perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
-
-mkdir -p /opt/repo/rocky
-mkdir -p /root/iso_mnt
-mount -o loop ${package_dir}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
-cp -r /root/iso_mnt/*  /opt/repo/rocky
-
-# for virmachine mount cdrom device
-# mkdir /mnt/cdrom
-# mount -t auto /dev/cdrom /mnt/cdrom
-# cp -r /mnt/cdrom/*  /opt/repo/rocky
-
-##cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
-
-tar -xf ${package_dir}/epel.tar -C /opt/repo/rocky
-tar -xzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
-mv /opt/repo/rocky/RockyOs/* /opt/repo/rocky
-rm -rf /opt/repo/rocky/RockyOs
-
-/bin/cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
-
-mkdir -p /opt/repo/openhpc
-tar -xf ${package_dir}/OpenHPC-2.3.CentOS_8.x86_64.tar -C /opt/repo/openhpc
-/opt/repo/openhpc/make_repo.sh
-
-mkdir -p /opt/repo/xcat
-tar -xjf ${package_dir}/xcat/xcat-dep-2.16.2-linux.tar.bz2 -C /opt/repo/xcat
-tar -xjf ${package_dir}/xcat/xcat-core-2.16.2-linux.tar.bz2 -C /opt/repo/xcat
-/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh
-/opt/repo/xcat/xcat-core/mklocalrepo.sh
-
-
-yum clean all
-yum makecache
-
-if [ $? != 0 ]; then
-echo "make repo error!"
-exit
-else
-echo "make repo succeed !"
-fi
-
-
-#######################
-### create repo file for compute node ###
-##package_dir=/root/package
-cat ${package_dir}/Rocky-local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' > /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/OpenHPC.local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-
-
+# timedatectl set-local-rtc 0
+# timedatectl set-time "2021-08-21 18:29:30"
+#  hwclock -w
 
 #########change server name#########
 echo ${sms_name} > /etc/hostname
@@ -144,10 +55,14 @@ chdef -t site domain=${domain_name}
 
 
 #########  add postbootscripts ####
-sed -i 's/10.0.0.1/'${sms_ip}'/' ${package_dir}/mypostboot.bash
-sed -i 's/sms_name=cjhpc/sms_name='${sms_name}'/' ${package_dir}/mypostboot.bash
-sed -i 's/domain_name=local/domain_name='${domain_name}'/' ${package_dir}/mypostboot.bash
-/bin/cp ${package_dir}/mypostboot.bash /install/postscripts/mypostboot
+if [ ! -e ./mypostboot.bash ] ; then
+  echo "./mypostboot.bash is not exist!!!"
+  exit
+fi
+/bin/cp ./mypostboot.bash /install/postscripts/mypostboot
+sed -i 's/10.0.0.1/'${sms_ip}'/' /install/postscripts/mypostboot
+sed -i 's/sms_name=cjhpc/sms_name='${sms_name}'/' /install/postscripts/mypostboot
+sed -i 's/domain_name=local/domain_name='${domain_name}'/' /install/postscripts/mypostboot
 chmod +x /install/postscripts/mypostboot
 
 
@@ -157,13 +72,17 @@ sysctl -p /etc/sysctl.conf
 
 ######set ntp server########
 yum -y -q install chrony
-systemctl enable chronyd.service       
-echo "server ${sms_name}" >> /etc/chrony.conf
-echo "allow all" >> /etc/chrony.conf   
+systemctl enable chronyd.service
+echo "server ntp1.aliyun.com iburst " >> /etc/chrony.conf 
+echo "server ntp.ntsc.ac.cn iburst" >> /etc/chrony.conf
+echo "allow ${sms_ip}/${internal_netmask_l}" >> /etc/chrony.conf   
+perl -pi -e "s/#local\ stratum/local\ stratum/" /etc/chrony.conf   
 systemctl restart chronyd 
 
+####
+
 #### install slurm ######
-yum -y -q install munge ohpc-slurm-server  
+yum -y -q install mailx munge ohpc-slurm-server  
 /bin/cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf
 ###start slurm###
 perl -pi -e "s/ControlMachine=\S+/ControlMachine=${sms_name}/" /etc/slurm/slurm.conf
@@ -190,8 +109,8 @@ mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('78g*tw23.ysq');"
 # 添加slurmdb 数据库用户
 mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
 mysql -uroot -p'78g*tw23.ysq' -e"REVOKE ALL PRIVILEGES ON *.* FROM 'slurmdb'@'localhost';"
-mysql -uroot -p'78g*tw23.ysq' -e"CERATE DATABASE slurm_acct_db;"
-mysql -uroot -p'78g*tw23.ysq' -e"CERATE DATABASE slurm_jobcomp_db;"
+mysql -uroot -p'78g*tw23.ysq' -e"CREATE DATABASE slurm_acct_db;"
+mysql -uroot -p'78g*tw23.ysq' -e"CREATE DATABASE slurm_jobcomp_db;"
 mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
 mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
 mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'${sms_name}' IDENTIFIED BY 'slurmdb123456';"
@@ -224,7 +143,15 @@ perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPass=slur
 perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPort=3306/"   /etc/slurm/slurm.conf      #mysql端口
 perl -pi -e "s/JobCompType=\S+/JobCompType=jobcomp\/mysql/"   /etc/slurm/slurm.conf      #使用mysql记录完成的任务信息
 perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompUser=slurmdb/"    /etc/slurm/slurm.conf     #mysql用户
+perl -pi -e "s/#JobAcctGatherType=\S+/JobAcctGatherType=jobacct_gather\/linux/" /etc/slurm/slurm.conf
+perl -pi -e "s/ProctrackType=\S+/ProctrackType=proctrack\/linuxproc/" /etc/slurm/slurm.conf
+perl -pi -e "s/#JobAcctGatherFrequency=\S+/JobAcctGatherFrequency=30/" /etc/slurm/slurm.conf
 
+echo "NodeName=${sms_name} Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN" >> /etc/slurm/slurm.conf
+echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=24:00:00 State=UP Oversubscribe=EXCLUSIVE" >> /etc/slurm/slurm.conf
+
+systemctl start munge
+systemctl start slurmctld
 
 ### add http repo for compute nodes 
 cat >/etc/httpd/conf.d/repo.conf <<'EOF'

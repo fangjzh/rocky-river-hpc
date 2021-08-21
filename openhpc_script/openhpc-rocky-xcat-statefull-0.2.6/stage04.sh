@@ -3,7 +3,7 @@
 source ./env.sh
 . /etc/profile.d/xcat.sh
 ##
-echo "boot and wait the compute node install before stage 05!"
+
 
 
 ##################### add nightingale ################
@@ -68,7 +68,7 @@ systemctl restart prometheus
 mkdir -p /opt/n9e
 cd /opt/n9e
 # wget 116.85.64.82/n9e-server-5.0.0-rc6.tar.gz
-tar zxvf ${package_dir}/n9e-server-5.0.0-rc6.tar.gz
+tar zxf ${package_dir}/n9e-server-5.0.0-rc6.tar.gz
 mysql -uroot -p'78g*tw23.ysq' < /opt/n9e/server/sql/n9e.sql
 
 mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'n9e'@'localhost' IDENTIFIED BY 'n9e123456';"
@@ -77,6 +77,7 @@ mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON n9e.* TO 'n9e'@'localho
 mysql -uroot -p'78g*tw23.ysq' -e"FLUSH PRIVILEGES"
 perl -pi -e "s/root:1234/n9e:n9e123456/" /opt/n9e/server/etc/server.yml
 
+perl -pi -e "s/DEBUG/INFO/" /opt/n9e/server/etc/server.yml
 
 /bin/cp /opt/n9e/server/etc/service/n9e-server.service /etc/systemd/system/
 systemctl daemon-reload
@@ -92,7 +93,7 @@ mkdir -p /opt/n9e
 cd /opt/n9e
 # wget 116.85.64.82/n9e-agentd-5.0.0-rc8.tar.gz
 # wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
-tar zxvf ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz
+tar zxf ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz
 
 perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
 /bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
@@ -100,3 +101,6 @@ systemctl daemon-reload
 systemctl enable n9e-agentd
 systemctl restart n9e-agentd
 ##systemctl status n9e-agentd
+
+
+echo "boot and wait the compute node install before stage 05!"

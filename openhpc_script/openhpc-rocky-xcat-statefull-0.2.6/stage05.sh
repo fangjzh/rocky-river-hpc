@@ -24,7 +24,7 @@ pdsh -w ${compute_prefix}0[1-2]  echo 'export MODULEPATH=\${MODULEPATH}:/opt/ohp
 ## change node name, cpu number, slots et.al.
 ################
 sed -i '/^PartitionName=normal/d'  /etc/slurm/slurm.conf
-nodenum=$(cat /etc/hosts | grep cnode0 |wc -l)
+nodenum=$(cat /etc/hosts | grep ${compute_prefix}0 |wc -l)
 echo "PartitionName=normal Nodes=${compute_prefix}0[1-${nodenum}] Default=YES MaxTime=24:00:00 State=UP Oversubscribe=EXCLUSIVE" >> /etc/slurm/slurm.conf
 
 
