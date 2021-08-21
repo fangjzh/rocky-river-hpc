@@ -47,7 +47,9 @@ echo "network error!"
 exit
 fi
 
-
+###设置时区###
+# timedatectl list-timezones
+timedatectl set-timezone Asia/Shanghai
 
 ###make local repo####
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
@@ -214,9 +216,6 @@ chmod 660 /etc/slurm/slurm.conf
 perl -pi -e "s/#AccountingStorageHost=/AccountingStorageHost=${sms_name}/"   /etc/slurm/slurm.conf       #指明slurndbd的hostname
 perl -pi -e "s/AccountingStorageHost/\nAccountingStoragePort=6819\nAccountingStorageHost/"    /etc/slurm/slurm.conf         #使用的端口，默认6819
 perl -pi -e "s/#AccountingStorageType=\S+/AccountingStorageType=accounting_storage\/slurmdbd/"   /etc/slurm/slurm.conf    #使用slurmdbd收集信息
-#perl -pi -e "s/#AccountingStorageLoc=/AccountingStorageLoc=\/var\/log\/slurm\/slurm_jobcomp.log/" /etc/slurm/slurm.conf
-#perl -pi -e "s/#AccountingStoragePass=/AccountingStoragePass=slurmdb123456/" /etc/slurm/slurm.conf
-#perl -pi -e "s/#AccountingStorageUser=/AccountingStorageUser=slurmdb/" /etc/slurm/slurm.conf
 
 
 perl -pi -e "s/#JobCompType/JobCompHost=${sms_name}\n#JobCompType/"     /etc/slurm/slurm.conf            #安装mysql的hostname
