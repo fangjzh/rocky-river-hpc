@@ -26,7 +26,7 @@ sleep 6
 cd ..
 
 # cd ${package_dir}
-sh ${package_dir}l_HPCKit_p_2021.3.0.3230_offline.sh -x
+sh ${package_dir}/l_HPCKit_p_2021.3.0.3230_offline.sh -x
 cd l_HPCKit_p_2021.3.0.3230_offline
 ##./install.sh --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
 ./install.sh --components intel.oneapi.lin.ifort-compiler:intel.oneapi.lin.dpcpp-cpp-compiler-pro:intel.oneapi.lin.mpi.devel --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
