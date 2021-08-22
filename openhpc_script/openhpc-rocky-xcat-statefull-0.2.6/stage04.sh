@@ -58,6 +58,7 @@ EOF
 systemctl daemon-reload
 systemctl enable prometheus
 systemctl restart prometheus
+sleep 8
 #systemctl status prometheus
 
 ### nightingale
@@ -85,14 +86,9 @@ systemctl enable n9e-server
 systemctl restart n9e-server
 ##systemctl status n9e-server
 
-## agentd
-mkdir -p /opt/repo/other/
-/bin/cp ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz /opt/repo/other/
-
+## n9e agentd
 mkdir -p /opt/n9e
 cd /opt/n9e
-# wget 116.85.64.82/n9e-agentd-5.0.0-rc8.tar.gz
-# wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
 tar zxf ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz
 
 perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
@@ -102,10 +98,34 @@ systemctl enable n9e-agentd
 systemctl restart n9e-agentd
 ##systemctl status n9e-agentd
 
+## add nightingale agent to compute node
+mkdir -p /opt/repo/other
+/bin/cp ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz /opt/repo/other
+cat <<EOF >>/install/postscripts/mypostboot
+
+mkdir -p /opt/n9e
+cd /opt/n9e
+wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
+tar zxf n9e-agentd-5.0.0-rc8.tar.gz
+rm -f n9e-agentd-5.0.0-rc8.tar.gz
+
+perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
+/bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable n9e-agentd
+systemctl restart n9e-agentd
+##systemctl status n9e-agentd
+
+EOF
+
 ### recover prometheus ###
 # systemctl stop n9e-agentd.service
+# systemctl stop prometheus.service
 # rm -rf /opt/prometheus/data/chunks_head/* 
 # rm -rf /opt/prometheus/data/wal/*
+# systemctl start prometheus.service
 # systemctl start n9e-agentd.service
 
+echo "======================================================="
 echo "boot and wait the compute node install before stage 05!"
+echo "======================================================="

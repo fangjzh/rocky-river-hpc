@@ -61,7 +61,7 @@ systemctl restart sshd
 
 
 #### 
-yum install -y rpcbind yp-tools ypbind  authconfig
+yum install -y -q rpcbind yp-tools ypbind  authconfig
 systemctl enable rpcbind ypbind
 echo "NISDOMAIN=${domain_name}" >> /etc/sysconfig/network
 
@@ -74,20 +74,3 @@ authconfig --update --enablenis
 ###
 systemctl restart rpcbind ypbind
 
-
-#### install n9e-agentd
-sleep 2
-
-mkdir -p /opt/n9e
-cd /opt/n9e
-##wget 116.85.64.82/n9e-agentd-5.0.0-rc8.tar.gz
-wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
-tar zxf n9e-agentd-5.0.0-rc8.tar.gz
-rm -f n9e-agentd-5.0.0-rc8.tar.gz
-
-perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
-/bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable n9e-agentd
-systemctl restart n9e-agentd
-##systemctl status n9e-agentd

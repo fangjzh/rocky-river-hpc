@@ -18,7 +18,6 @@ epel.tar
 l_BaseKit_p_2021.3.0.3219_offline.sh
 l_HPCKit_p_2021.3.0.3230_offline.sh
 OpenHPC-2.3.CentOS_8.x86_64.tar
-Rocky-8.4-x86_64-dvd1.iso
 Rocky-local.repo
 RockyOs.tgz
 xcat/xcat-core-2.16.2-linux.tar.bz2  
@@ -36,9 +35,13 @@ done
 ###make local repo####
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
 
+if [ ! -e ${iso_path}/Rocky-8.4-x86_64-dvd1.iso ] ; then
+  echo "${iso_path}/Rocky-8.4-x86_64-dvd1.iso is not exist!!!"
+  exit
+fi
 mkdir -p /opt/repo/rocky
 mkdir -p /root/iso_mnt
-mount -o loop ${package_dir}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
+mount -o loop ${iso_path}/Rocky-8.4-x86_64-dvd1.iso   /root/iso_mnt
 cp -r /root/iso_mnt/*  /opt/repo/rocky
 
 # for virmachine mount cdrom device

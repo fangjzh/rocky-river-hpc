@@ -4,8 +4,8 @@ source ./env.sh
 . /etc/profile.d/xcat.sh
 
 ########## add hack sulotion of rocky os support #######
-cd ${package_dir}
-tar -xzf backup_xcat_hack.tgz
+# cd ${package_dir}
+tar -xzf ${package_dir}/backup_xcat_hack.tgz
 cd backup_xcat_hack
 cp -r install /opt/xcat/share/xcat/install/rocky 
 cp -r netboot /opt/xcat/share/xcat/netboot/rocky 
@@ -22,7 +22,7 @@ cp -r netboot /opt/xcat/share/xcat/netboot/rocky
 /bin/cp ./Template.pm /opt/xcat/lib/perl/xCAT/Template.pm 
 /bin/cp ./Schema.pm /opt/xcat/lib/perl/xCAT/Schema.pm 
 systemctl restart xcatd
-cd ~
+# cd ~
 #########################################################
 
 chtab key=system passwd.username=root passwd.password=`openssl rand -base64 12`

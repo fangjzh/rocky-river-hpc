@@ -1,6 +1,16 @@
 #!/bin/sh
 source ./env.sh
 
+### 修复网卡名称 ###
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} ] ; then
+  echo "/etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} is not exist!!!"
+  exit
+else
+perl -pi -e "s/NAME=.+/NAME=\"${sms_eth_internal}\"/" /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal}
+perl -pi -e "s/DEVICE=.+/DEVICE=${sms_eth_internal}/" /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal}
+nmcli c reload
+fi
+
 #########set internal interface####
 nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
 nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
@@ -212,39 +222,3 @@ sleep 6
 ###  ctrl-d to continue
 systemctl restart rpcbind ypserv ypxfrd yppasswdd
 ###########
-
-
-
-###install develop tools##
-yum -y -q install ohpc-autotools
-yum -y -q install EasyBuild-ohpc
-yum -y -q install gnu9-compilers-ohpc
-yum -y -q install mpich-ucx-gnu9-ohpc
-yum -y -q install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc
-####
-yum -y -q install lmod-defaults-gnu9-openmpi4-ohpc
-yum -y -q install glibc-static libstdc++-static
-yum -y -q install dos2unix
-###
-
-
-#####install intel one api########
-###extract and install#
-cd ${package_dir}
-sh l_BaseKit_p_2021.3.0.3219_offline.sh -x 
-cd l_BaseKit_p_2021.3.0.3219_offline
-##./install.sh --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
-./install.sh --components intel.oneapi.lin.dpcpp-cpp-compiler:intel.oneapi.lin.mkl.devel  --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
-sleep 6
-
-cd ${package_dir}
-sh l_HPCKit_p_2021.3.0.3230_offline.sh -x
-cd l_HPCKit_p_2021.3.0.3230_offline
-##./install.sh --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
-./install.sh --components intel.oneapi.lin.ifort-compiler:intel.oneapi.lin.dpcpp-cpp-compiler-pro:intel.oneapi.lin.mpi.devel --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
-sleep 6
-
-## how to make module###
-/opt/ohpc/pub/apps/intel/modulefiles-setup.sh
-echo 'export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' >> /etc/profile.d/lmod.sh
-
