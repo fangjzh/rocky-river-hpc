@@ -118,14 +118,14 @@ systemctl enable mariadb.service
 mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('78g*tw23.ysq');"
 # 添加slurmdb 数据库用户
 mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
-mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'slurm'@'localhost' IDENTIFIED BY 'slurm_jcomp';"
+#mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'slurm'@'localhost' IDENTIFIED BY 'slurm_jcomp';"
 mysql -uroot -p'78g*tw23.ysq' -e"REVOKE ALL PRIVILEGES ON *.* FROM 'slurmdb'@'localhost';"
 mysql -uroot -p'78g*tw23.ysq' -e"CREATE DATABASE slurm_acct_db;"
-mysql -uroot -p'78g*tw23.ysq' -e"CREATE DATABASE slurm_jobcomp_db;"
+#mysql -uroot -p'78g*tw23.ysq' -e"CREATE DATABASE slurm_jobcomp_db;"
 mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'localhost' IDENTIFIED BY 'slurmdb123456';"
-mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurm'@'localhost' IDENTIFIED BY 'slurm_jcomp';"
+#mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurm'@'localhost' IDENTIFIED BY 'slurm_jcomp';"
 mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurmdb'@'${sms_name}' IDENTIFIED BY 'slurmdb123456';"
-mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurm'@'${sms_name}' IDENTIFIED BY 'slurm_jcomp';"
+#mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON slurm_jobcomp_db.* TO 'slurm'@'${sms_name}' IDENTIFIED BY 'slurm_jcomp';"
 mysql -uroot -p'78g*tw23.ysq' -e"FLUSH PRIVILEGES"
 
 ## 配置slurmdb
@@ -147,13 +147,16 @@ perl -pi -e "s/#AccountingStorageHost=/AccountingStorageHost=${sms_name}/"   /et
 perl -pi -e "s/AccountingStorageHost/\nAccountingStoragePort=6819\nAccountingStorageHost/"    /etc/slurm/slurm.conf         #使用的端口，默认6819
 perl -pi -e "s/#AccountingStorageType=\S+/AccountingStorageType=accounting_storage\/slurmdbd/"   /etc/slurm/slurm.conf    #使用slurmdbd收集信息
 
+perl -pi -e "s/#JobCompLoc=/JobCompLoc=\/var\/log\/slurm_jobcomp.log/"  /etc/slurm/slurm.conf   #日志信息
 
-perl -pi -e "s/#JobCompType/JobCompHost=${sms_name}\n#JobCompType/"     /etc/slurm/slurm.conf            #安装mysql的hostname
-perl -pi -e "s/#JobCompLoc=/JobCompLoc=\/var\/log\/slurm\/slurm_jobcomp.log/"  /etc/slurm/slurm.conf   #日志信息
-perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPass=slurm_jcomp/"    /etc/slurm/slurm.conf    #mysql密码
-perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPort=3306/"   /etc/slurm/slurm.conf      #mysql端口
-perl -pi -e "s/JobCompType=\S+/JobCompType=jobcomp\/mysql/"   /etc/slurm/slurm.conf      #使用mysql记录完成的任务信息
-perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompUser=slurm/"    /etc/slurm/slurm.conf     #mysql用户
+## store jobcomp data to DB, slurmdbd is not supported with jobcomp now, 
+## thus db password can be seen by other users in slurm.conf.
+#perl -pi -e "s/#JobCompType/JobCompHost=${sms_name}\n#JobCompType/"     /etc/slurm/slurm.conf            #安装mysql的hostname
+#perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPass=slurm_jcomp/"    /etc/slurm/slurm.conf    #mysql密码
+#perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompPort=3306/"   /etc/slurm/slurm.conf      #mysql端口
+#perl -pi -e "s/JobCompType=\S+/JobCompType=jobcomp\/mysql/"   /etc/slurm/slurm.conf      #使用mysql记录完成的任务信息
+#perl -pi -e "s/JobCompHost=${sms_name}/JobCompHost=${sms_name}\nJobCompUser=slurm/"    /etc/slurm/slurm.conf     #mysql用户
+
 perl -pi -e "s/#JobAcctGatherType=\S+/JobAcctGatherType=jobacct_gather\/linux/" /etc/slurm/slurm.conf
 perl -pi -e "s/ProctrackType=\S+/ProctrackType=proctrack\/linuxproc/" /etc/slurm/slurm.conf
 perl -pi -e "s/#JobAcctGatherFrequency=\S+/JobAcctGatherFrequency=30/" /etc/slurm/slurm.conf
