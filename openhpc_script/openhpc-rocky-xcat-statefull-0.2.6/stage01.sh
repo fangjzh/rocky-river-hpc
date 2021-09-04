@@ -162,7 +162,7 @@ perl -pi -e "s/ProctrackType=\S+/ProctrackType=proctrack\/linuxproc/" /etc/slurm
 perl -pi -e "s/#JobAcctGatherFrequency=\S+/JobAcctGatherFrequency=30/" /etc/slurm/slurm.conf
 
 echo "NodeName=${sms_name} Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN" >> /etc/slurm/slurm.conf
-echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=24:00:00 State=UP Oversubscribe=EXCLUSIVE" >> /etc/slurm/slurm.conf
+echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=24:00:00 State=UP Oversubscribe=YES" >> /etc/slurm/slurm.conf
 
 systemctl start munge
 systemctl start slurmctld
