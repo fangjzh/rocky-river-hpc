@@ -16,6 +16,7 @@ nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
 nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
 nmcli conn mod ${sms_eth_internal} ipv4.dns ${sms_ip}
 nmcli conn mod ${sms_eth_internal} ipv4.method manual
+nmcli conn mod ${sms_eth_internal} autoconnect yes
 nmcli conn up ${sms_eth_internal}
 
 if [ $? != 0 ]; then
@@ -172,7 +173,13 @@ yum -y -q install ohpc-slurm-client
 #systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 
-### add http repo for compute nodes 
+perl -pi -e "s/remote-fs.target/remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
+perl -pi -e "s/munge.service/munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
+systemctl daemon-reload
+systemctl enable slurmctld
+systemctl enable slurmd
+
+### add http repo in head node for compute nodes 
 cat >/etc/httpd/conf.d/repo.conf <<'EOF'
 AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
 <Directory "/opt/repo">
