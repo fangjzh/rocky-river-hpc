@@ -86,6 +86,9 @@ perl -pi -e "s/root:1234/n9e:n9e123456/" /opt/n9e/server/etc/server.yml
 perl -pi -e "s/DEBUG/INFO/" /opt/n9e/server/etc/server.yml
 
 /bin/cp /opt/n9e/server/etc/service/n9e-server.service /etc/systemd/system/
+perl -ni -e 'print; print"After=network.target mariadb.service prometheus.service\n" if $. == 2' /etc/systemd/system/n9e-server.service
+## equal to this
+# perl -pi -e 'print"After=network.target prometheus.service\n" if $. == 2' /etc/systemd/system/n9e-server.service
 systemctl daemon-reload
 systemctl enable n9e-server
 systemctl restart n9e-server
@@ -185,6 +188,7 @@ systemctl start prometheus-slurm-exporter
 systemctl restart prometheus
 
 ################################################################
+##  这个在repo里边有，可以直接yum install 到时替换一下
 ## install grafana-8.1.0-1.x86_64.rpm
 filelist=(
 grafana-8.1.0-1.x86_64.rpm
