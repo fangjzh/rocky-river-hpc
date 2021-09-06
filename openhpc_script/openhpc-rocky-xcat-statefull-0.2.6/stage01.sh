@@ -175,6 +175,8 @@ echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 
 perl -pi -e "s/remote-fs.target/remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
 perl -pi -e "s/munge.service/munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
+perl -pi -e 'print"Wants=network-online.target\n" if $. == 4'  /usr/lib/systemd/system/slurmctld.service
+perl -pi -e 'print"Wants=network-online.target\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
 systemctl daemon-reload
 systemctl enable slurmctld
 systemctl enable slurmd
