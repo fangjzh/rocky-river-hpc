@@ -3,7 +3,7 @@ source ./env.sh
 ##
 
 ###install develop tools##
-yum -y -q install automake libtool
+# yum -y -q install automake libtool autogen
 yum -y -q install ohpc-autotools
 yum -y -q install EasyBuild-ohpc
 yum -y -q install gnu9-compilers-ohpc
