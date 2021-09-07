@@ -163,7 +163,7 @@ perl -pi -e "s/ProctrackType=\S+/ProctrackType=proctrack\/linuxproc/" /etc/slurm
 perl -pi -e "s/#JobAcctGatherFrequency=\S+/JobAcctGatherFrequency=30/" /etc/slurm/slurm.conf
 
 echo "NodeName=${sms_name} Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN" >> /etc/slurm/slurm.conf
-echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=24:00:00 State=UP Oversubscribe=YES" >> /etc/slurm/slurm.conf
+echo "PartitionName=head Nodes=${sms_name} Default=YES MaxTime=168:00:00 State=UP Oversubscribe=YES" >> /etc/slurm/slurm.conf
 
 systemctl start munge
 systemctl start slurmctld
@@ -177,8 +177,8 @@ echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 perl -pi -e "s/munge.service.*/munge.service mariadb.service/" /usr/lib/systemd/system/slurmdbd.service
 perl -pi -e "s/remote-fs.target.*/remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
 perl -pi -e "s/munge.service.*/munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
-perl -pi -e 'print"Wants=network-online.target\n" if $. == 4'  /usr/lib/systemd/system/slurmctld.service
-perl -pi -e 'print"Wants=network-online.target\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
+perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmctld.service
+perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
 systemctl daemon-reload
 systemctl enable slurmctld
 systemctl enable slurmd
