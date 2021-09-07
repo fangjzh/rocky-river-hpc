@@ -115,9 +115,11 @@ systemctl daemon-reload
 systemctl enable n9e-agentd
 systemctl restart n9e-agentd
 ##systemctl status n9e-agentd
+chown -R root.root /opt/n9e
 
 EOF
 
+chown -R root.root /opt/prometheus /opt/n9e
 ### recover prometheus ###
 # systemctl stop n9e-agentd.service
 # systemctl stop prometheus.service

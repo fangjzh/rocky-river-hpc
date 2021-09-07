@@ -123,6 +123,7 @@ systemctl daemon-reload
 systemctl enable n9e-agentd
 systemctl restart n9e-agentd
 ##systemctl status n9e-agentd
+chown -R root.root /opt/n9e
 
 EOF
 
@@ -133,6 +134,8 @@ EOF
 # rm -rf /opt/prometheus/data/wal/*
 # systemctl start prometheus.service
 # systemctl start n9e-agentd.service
+
+chown -R root.root /opt/prometheus /opt/n9e
 
 ################################################################
 ## add prometheus slurm exporter

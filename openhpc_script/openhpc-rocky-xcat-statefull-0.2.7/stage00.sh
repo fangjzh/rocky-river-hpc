@@ -51,12 +51,21 @@ cp -r /root/iso_mnt/*  /opt/repo/rocky
 
 ##cp -r ${package_dir}/Rocky-package/* /opt/repo/rocky
 
-tar -xf ${package_dir}/epel.tar -C /opt/repo/rocky
-tar -xzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
+tar --no-same-owner -xf ${package_dir}/epel.tar -C /opt/repo/rocky
+tar --no-same-owner -xzf ${package_dir}/RockyOs.tgz -C /opt/repo/rocky
 mv /opt/repo/rocky/RockyOs/* /opt/repo/rocky
 rm -rf /opt/repo/rocky/RockyOs
 
+find /opt/repo/rocky/epel -type f -exec chmod 444 {} \;
+find /opt/repo/rocky/extras -type f -exec chmod 444 {} \;
+find /opt/repo/rocky/PowerTools -type f -exec chmod 444 {} \;
+find /opt/repo/rocky/epel -type d -exec chmod 555 {} \;
+find /opt/repo/rocky/extras -type d -exec chmod 555 {} \;
+find /opt/repo/rocky/PowerTools -type d -exec chmod 555 {} \;
+# chown -R root.root /opt/repo/rocky
+
 /bin/cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
+chmod 644 /etc/yum.repos.d/Rocky-local.repo
 
 mkdir -p /opt/repo/openhpc
 tar -xf ${package_dir}/OpenHPC-2.3.CentOS_8.x86_64.tar -C /opt/repo/openhpc
