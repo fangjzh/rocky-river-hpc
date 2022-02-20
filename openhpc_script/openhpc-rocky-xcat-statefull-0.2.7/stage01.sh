@@ -33,7 +33,7 @@ timedatectl set-timezone Asia/Shanghai
 
 #########change server name#########
 echo ${sms_name} > /etc/hostname
-echo "${sms_ip}  ${sms_name}  ${sms_name}.${domain_name}" >>/etc/hosts
+echo "${sms_ip}  ${sms_name}.${domain_name}  ${sms_name}" >>/etc/hosts
 nmcli g hostname ${sms_name}
 
 
