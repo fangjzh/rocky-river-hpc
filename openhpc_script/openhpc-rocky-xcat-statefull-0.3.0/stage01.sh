@@ -27,9 +27,12 @@ fi
 ###设置时区###
 # timedatectl list-timezones
 timedatectl set-timezone Asia/Shanghai
+# hwclock --verbose
 # timedatectl set-local-rtc 0
+# timedatectl set-ntp no
 # timedatectl set-time "2021-08-21 18:29:30"
 #  hwclock -w
+# timedatectl set-ntp yes
 
 #########change server name#########
 echo ${sms_name} > /etc/hostname
@@ -89,7 +92,7 @@ echo "server ntp.ntsc.ac.cn iburst" >> /etc/chrony.conf
 echo "allow ${sms_ip}/${internal_netmask_l}" >> /etc/chrony.conf   
 perl -pi -e "s/#local\ stratum/local\ stratum/" /etc/chrony.conf   
 systemctl restart chronyd 
-
+## about chrony: https://www.cnblogs.com/my-show-time/p/14658895.html
 ####
 
 #### install slurm ######

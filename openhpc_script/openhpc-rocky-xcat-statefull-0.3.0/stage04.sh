@@ -5,33 +5,34 @@ source ./env.sh
 ##
 
 ## this stage is not finished yet !!! ###
+
+echo this stage is not necessary, we can ommit it....
+echo now exit....
 exit
 
-
-##################### add nightingale ################
-
-### prometheus
-
 filelist=(
-prometheus-2.28.0.linux-amd64.tar.gz
-n9e-server-5.0.0-rc6.tar.gz
-n9e-agentd-5.0.0-rc8.tar.gz
+n9e-5.3.4.tar.gz                     
+prometheus-2.28.0.linux-amd64.tar.gz 
+telegraf-1.21.4_linux_amd64.tar.gz   
 )
 
 for ifile in ${filelist[@]}
 do
-  if [ ! -e ${package_dir}/${ifile} ] ; then
+  if [ ! -e ${package_dir}/nightingleV5/${ifile} ] ; then
   echo "${ifile} is not exist!!!"
   exit
 fi
 done
 
+##############################
+# install prometheus
+
 echo "installing prometheus ...."
 echo "webport:9090"
 
 mkdir -p /opt/prometheus
-# wget https://s3-gz01.didistatic.com/n9e-pub/prome/prometheus-2.28.0.linux-amd64.tar.gz -O prometheus-2.28.0.linux-amd64.tar.gz
-tar xf ${package_dir}/prometheus-2.28.0.linux-amd64.tar.gz
+## wget https://s3-gz01.didistatic.com/n9e-pub/prome/prometheus-2.28.0.linux-amd64.tar.gz -O prometheus-2.28.0.linux-amd64.tar.gz
+tar xf ${package_dir}/nightingleV5/prometheus-2.28.0.linux-amd64.tar.gz
 cp -far prometheus-2.28.0.linux-amd64/*  /opt/prometheus/
 
 # service 
@@ -47,7 +48,6 @@ Type=simple
 ExecStart=/opt/prometheus/prometheus  --config.file=/opt/prometheus/prometheus.yml --storage.tsdb.path=/opt/prometheus/data --web.enable-lifecycle --enable-feature=remote-write-receiver --query.lookback-delta=2m 
 
 Restart=on-failure
-RestartSecs=5s
 SuccessExitStatus=0
 LimitNOFILE=65536
 StandardOutput=syslog
@@ -62,82 +62,190 @@ EOF
 systemctl daemon-reload
 systemctl enable prometheus
 systemctl restart prometheus
-sleep 8
-#systemctl status prometheus
+systemctl status prometheus
 
-########################################
-### nightingale 
-echo "installing nightingle...."
-echo "webport:8000 user:root  password:root.2020"
-# 安装 notify.py 依赖 
-# pip install bottle
 
-# 3.安装n9e-server
-mkdir -p /opt/n9e
-cd /opt/n9e
-# wget 116.85.64.82/n9e-server-5.0.0-rc6.tar.gz
-tar zxf ${package_dir}/n9e-server-5.0.0-rc6.tar.gz
-mysql -uroot -p'78g*tw23.ysq' < /opt/n9e/server/sql/n9e.sql
+
+############## about Prometheus Time error #####
+## 有时候更改系统时间，导致Prometheus数据库写入错误 ###
+## 可以删除数据重来 ##
+## systemctl stop prometheus
+## rm -rf /opt/prometheus/data/* ##
+## systemctl start prometheus
+
+
+# install mysql
+yum -y install mariadb*
+systemctl enable mariadb
+systemctl restart mariadb
+## mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('1234');"
+
+# install redis
+yum install -y redis
+systemctl enable redis
+systemctl restart redis
+
+########## install n9e #######
+mkdir -p /opt/n9e && cd /opt/n9e
+
+# 去 https://github.com/didi/nightingale/releases 找最新版本的包，文档里的包地址可能已经不是最新的了
+tarball=n9e-5.3.4.tar.gz
+# urlpath=https://github.com/didi/nightingale/releases/download/v5.0.0-ga-06/${tarball}
+# wget $urlpath || exit 1
+
+tar zxvf ${package_dir}/nightingleV5/${tarball}
+
+mysql -uroot -p'78g*tw23.ysq' < docker/initsql/a-n9e.sql
 
 mysql -uroot -p'78g*tw23.ysq' -e"CREATE USER 'n9e'@'localhost' IDENTIFIED BY 'n9e123456';"
 mysql -uroot -p'78g*tw23.ysq' -e"REVOKE ALL PRIVILEGES ON *.* FROM 'n9e'@'localhost';"
-mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON n9e.* TO 'n9e'@'localhost' IDENTIFIED BY 'n9e123456';"
+mysql -uroot -p'78g*tw23.ysq' -e"GRANT ALL PRIVILEGES ON n9e_v5.* TO 'n9e'@'localhost' IDENTIFIED BY 'n9e123456';"
 mysql -uroot -p'78g*tw23.ysq' -e"FLUSH PRIVILEGES"
-perl -pi -e "s/root:1234/n9e:n9e123456/" /opt/n9e/server/etc/server.yml
 
-perl -pi -e "s/DEBUG/INFO/" /opt/n9e/server/etc/server.yml
+perl -pi -e "s/User = \"root\"/User = \"n9e\"/" /opt/n9e/etc/server.conf
+perl -pi -e "s/Password = \"1234\"/Password = \"n9e123456\"/" /opt/n9e/etc/server.conf
 
-/bin/cp /opt/n9e/server/etc/service/n9e-server.service /etc/systemd/system/
+perl -pi -e "s/User = \"root\"/User = \"n9e\"/" /opt/n9e/etc/webapi.conf
+perl -pi -e "s/Password = \"1234\"/Password = \"n9e123456\"/" /opt/n9e/etc/webapi.conf
+
+perl -pi -e "s/DEBUG/INFO/" /opt/n9e/etc/server.conf
+
+
+perl -pi -e "s/\/root\/gopath\/src\/n9e/\/opt\/n9e/" /opt/n9e/etc/service/n9e-server.service
+perl -pi -e "s/\/root\/gopath\/src\/n9e/\/opt\/n9e/" /opt/n9e/etc/service/n9e-webapi.service
+
+/bin/cp /opt/n9e/etc/service/n9e-server.service /etc/systemd/system/
+/bin/cp /opt/n9e/etc/service/n9e-webapi.service /etc/systemd/system/
+
 perl -ni -e 'print; print"After=network.target mariadb.service prometheus.service\n" if $. == 2' /etc/systemd/system/n9e-server.service
+perl -ni -e 'print; print"After=network.target mariadb.service prometheus.service\n" if $. == 2' /etc/systemd/system/n9e-webapi.service
 ## equal to this
 # perl -pi -e 'print"After=network.target prometheus.service\n" if $. == 2' /etc/systemd/system/n9e-server.service
 systemctl daemon-reload
 systemctl enable n9e-server
 systemctl restart n9e-server
+systemctl enable n9e-webapi
+systemctl restart n9e-webapi
 ##systemctl status n9e-server
+######################
+echo "web port 18000"
+echo "user root password root.2020"
 
-## n9e agentd
-mkdir -p /opt/n9e
-cd /opt/n9e
-tar zxf ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz
+cd /root
 
-perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
-/bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable n9e-agentd
-systemctl restart n9e-agentd
-##systemctl status n9e-agentd
 
-## add nightingale agent to compute node
-mkdir -p /opt/repo/other
-/bin/cp ${package_dir}/n9e-agentd-5.0.0-rc8.tar.gz /opt/repo/other
-cat <<EOF >>/install/postscripts/mypostboot
+## nohup ./n9e server &> server.log &
+## nohup ./n9e webapi &> webapi.log &
 
-mkdir -p /opt/n9e
-cd /opt/n9e
-wget http://${sms_ip}:80//opt/repo/other/n9e-agentd-5.0.0-rc8.tar.gz
-tar zxf n9e-agentd-5.0.0-rc8.tar.gz
-rm -f n9e-agentd-5.0.0-rc8.tar.gz
+# check logs
+# check port
 
-perl -pi -e "s/localhost/${sms_ip}/" /opt/n9e/agentd/etc/agentd.yaml
-/bin/cp /opt/n9e/agentd/systemd/n9e-agentd.service /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable n9e-agentd
-systemctl restart n9e-agentd
-##systemctl status n9e-agentd
-chown -R root.root /opt/n9e
+############# install telegraf #####################
+#!/bin/sh
+
+version=1.21.4
+tarball=telegraf-${version}_linux_amd64.tar.gz
+# wget https://dl.influxdata.com/telegraf/releases/$tarball
+tar xzvf ${package_dir}/nightingleV5/$tarball
+
+mkdir -p /opt/ohpc/pub/apps/telegraf
+cp -far telegraf-${version}/usr/bin/telegraf /opt/ohpc/pub/apps/telegraf
+
+cat <<EOF > /opt/ohpc/pub/apps/telegraf/telegraf.conf
+[global_tags]
+
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_interval = "10s"
+  flush_jitter = "0s"
+  precision = ""
+  hostname = ""
+  omit_hostname = false
+
+[[outputs.opentsdb]]
+  host = "http://127.0.0.1"
+  port = 19000
+  http_batch_size = 50
+  http_path = "/opentsdb/put"
+  debug = false
+  separator = "_"
+
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = true
+
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+
+[[inputs.diskio]]
+
+[[inputs.kernel]]
+
+[[inputs.mem]]
+
+[[inputs.processes]]
+
+[[inputs.system]]
+  fielddrop = ["uptime_format"]
+
+[[inputs.net]]
+  ignore_protocol_stats = true
 
 EOF
 
-### recover prometheus ###
-# systemctl stop n9e-agentd.service
-# systemctl stop prometheus.service
-# rm -rf /opt/prometheus/data/chunks_head/* 
-# rm -rf /opt/prometheus/data/wal/*
-# systemctl start prometheus.service
-# systemctl start n9e-agentd.service
+perl -pi -e "s/127.0.0.1/${sms_ip}/" /opt/ohpc/pub/apps/telegraf/telegraf.conf
 
-chown -R root.root /opt/prometheus /opt/n9e
+### 这一段在计算节点上运行即可监控计算节点，注意计算节点要时间同步
+cat <<EOF > /etc/systemd/system/telegraf.service
+[Unit]
+Description="telegraf"
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/opt/ohpc/pub/apps/telegraf/telegraf --config telegraf.conf
+WorkingDirectory=/opt/ohpc/pub/apps/telegraf
+
+SuccessExitStatus=0
+LimitNOFILE=65536
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=telegraf
+KillMode=process
+KillSignal=SIGQUIT
+TimeoutStopSec=5
+Restart=always
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable telegraf
+systemctl restart telegraf
+systemctl status telegraf
+
+######################################################
+######################################################
+######################################################
+######################################################
+
+
+echo finished.................................
+
+exit
+
+
+######################################################
+######################################################
 
 ################################################################
 ## add prometheus slurm exporter

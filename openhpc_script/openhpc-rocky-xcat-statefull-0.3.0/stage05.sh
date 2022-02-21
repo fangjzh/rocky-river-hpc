@@ -11,10 +11,12 @@ xdcp compute /etc/munge/munge.key /etc/munge/munge.key
 #######################################################################
 
 
-
+## 计算节点添加Intel 编译器module
 ## this command is ok 
 pdsh -w ${compute_prefix}0[1-2]  echo 'export MODULEPATH=\${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' \>\> /etc/profile.d/lmod.sh
 
+## 强制时间同步
+pdsh -w ${compute_prefix}0[1-2]  chronyc -a makestep
 
 #######################################################################
 #######################################################################
