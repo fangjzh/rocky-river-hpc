@@ -34,6 +34,11 @@ timedatectl set-timezone Asia/Shanghai
 #  hwclock -w
 # timedatectl set-ntp yes
 
+#date -s `date -d -1day +%D`
+#date -s `date -d -8hour +%T`
+## 减去八小时的准确做法
+# date -s "`date -d -1hour "+%F %T"`"
+
 #########change server name#########
 echo ${sms_name} > /etc/hostname
 echo "${sms_ip}  ${sms_name}.${domain_name}  ${sms_name}" >>/etc/hosts
