@@ -181,7 +181,9 @@ yum -y -q install ohpc-slurm-client
 #systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 
-
+## This kind of perl command should be changed !!!
+## a fixed template should be prepared, sence the default service file in different edition
+## is different
 perl -pi -e "s/munge.service.*/munge.service mariadb.service/" /usr/lib/systemd/system/slurmdbd.service
 perl -pi -e "s/remote-fs.target.*/remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
 perl -pi -e "s/munge.service.*/munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
