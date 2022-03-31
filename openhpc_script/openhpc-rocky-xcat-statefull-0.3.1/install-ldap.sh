@@ -2,31 +2,42 @@
 ## https://www.openldap.org/software/download/OpenLDAP/openldap-release
 # wget https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.1.tgz
 
-yum -y -q install libtool-ltdl-devel  cyrus-sasl-devel ##cyrus-sasl-ldap 
+yum -y -q install gcc make libtool-ltdl-devel  cyrus-sasl-devel  openssl-devel # systemd-devel perl-devel #openssl ##cyrus-sasl-ldap 
 ## install process
 tar -xvzf openldap-2.6.1.tgz
 cd openldap-2.6.1
+## ./configure --prefix=/opt/openldap --disable-static \
+## --enable-debug --with-tls=openssl --with-cyrus-sasl --enable-dynamic \
+## --enable-crypt --enable-spasswd --enable-slapd --enable-modules \
+## --enable-rlookups --enable-backends=mod --disable-sql \
+## --enable-overlays=mod --enable-wt=no --with-systemd --enable-mdb
 ./configure --prefix=/opt/openldap --with-tls=openssl --with-cyrus-sasl
 make depend
 make
-## 如果改了配置文件，一定要重新解压再编译，以免后边出现lib软链错误
-## if the prefix folder already have files, remove it before make install
 make install
 cd /root
-
+## make test 出错可能是事前没有make ^_^
+## 如果改了配置文件，一定要重新解压再编译，以免后边出现lib软链错误
+## if the prefix folder already have files, remove it before make install
 
 ## add ldap user
 useradd -r -s /sbin/nologin -d /opt/openldap/etc/slapd.d -m ldapd
 mkdir -p /opt/openldap/etc/slapd.d
-chown ldapd.ldapd /opt/openldap/etc/slapd.d
-chmod 700 /opt/openldap/etc/slapd.d
+
 
 ##  这是由/opt/openldap/etc/openldap/slapd.ldif 指定的
 ##  mdb 数据库的位置，后边的Manager用户都放在这个数据库里边
 mkdir  -p /opt/openldap/var/openldap-data
-chown ldapd.ldapd  /opt/openldap/var/openldap-data
+chown -R ldapd.ldapd  /opt/openldap/var/openldap-data
 chmod 700  /opt/openldap/var/openldap-data
 
+/bin/cp /opt/openldap/etc/openldap/slapd.ldif.default /opt/openldap/etc/openldap/slapd.ldif
+#perl -pi -e 'print"include: file:///opt/openldap/etc/openldap/schema/cosine.ldif\n" if ($_ =~ /core.ldif$/)'  /opt/openldap/etc/openldap/slapd.ldif
+#perl -pi -e 'print"include: file:///opt/openldap/etc/openldap/schema/nis.ldif\n" if ($_ =~ /core.ldif$/)'  /opt/openldap/etc/openldap/slapd.ldif
+perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/nis.ldif/' /opt/openldap/etc/openldap/slapd.ldif
+perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/cosine.ldif/' /opt/openldap/etc/openldap/slapd.ldif
+
+export PATH=/opt/openldap/sbin:$PATH
 ### 
 # sudo -V |  grep -i "ldap"
 ## results should be
@@ -36,21 +47,21 @@ chmod 700  /opt/openldap/var/openldap-data
 ## if it is ok
 # rpm -ql sudo-1.8.29-7.el8_4.1.x86_64 | grep -i schema.OpenLDAP
 # cp /usr/share/doc/sudo/schema.OpenLDAP /opt/openldap/etc/openldap/schema/sudo.schema
-cp `rpm -ql sudo | grep -i schema.OpenLDAP` /opt/openldap/etc/openldap/schema/sudo.schema
+cd /root
+sudo_schema=`rpm -ql sudo | grep -i schema.OpenLDAP`
+if [ -e $sudo_schema ] ; then
+  /bin/cp $sudo_schema /opt/openldap/etc/openldap/schema/sudo.schema
+  ## convert schema to ldif   
+  if [ -e ./schema2ldif.sh ] ; then
+    chmod +x ./schema2ldif.sh
+    ./schema2ldif.sh /opt/openldap/etc/openldap/schema/sudo.schema
+    /bin/cp ./sudo.ldif /opt/openldap/etc/openldap/schema
+    perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/sudo.ldif/' /opt/openldap/etc/openldap/slapd.ldif
+  fi
+fi
 
-## convert schema to ldif
-export PATH=/opt/openldap/sbin:$PATH 
-chmod +x ./schema2ldif.sh
-./schema2ldif.sh /opt/openldap/etc/openldap/schema/sudo.schema
-cp ./sudo.ldif /opt/openldap/etc/openldap/schema
-
-#perl -pi -e 'print"include: file:///opt/openldap/etc/openldap/schema/cosine.ldif\n" if ($_ =~ /core.ldif$/)'  /opt/openldap/etc/openldap/slapd.ldif
-#perl -pi -e 'print"include: file:///opt/openldap/etc/openldap/schema/nis.ldif\n" if ($_ =~ /core.ldif$/)'  /opt/openldap/etc/openldap/slapd.ldif
-perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/nis.ldif/' /opt/openldap/etc/openldap/slapd.ldif
-perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/cosine.ldif/' /opt/openldap/etc/openldap/slapd.ldif
-perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/opt\/openldap\/etc\/openldap\/schema\/sudo.ldif/' /opt/openldap/etc/openldap/slapd.ldif
-
-mypass=`slappasswd -s '78g*tw23.ysq'`
+mypass=`slappasswd -s '78g*tw23.ysq'`  ### 这条命令每次生成的字符串不一样，而且有特殊字符
+mypass={SSHA}ehNE9DlisIY7rFt6Sf3DWMPVnUoqcRYe
 perl -pi -e 's/secret/'${mypass}'/' /opt/openldap/etc/openldap/slapd.ldif
 
 ## 在初始配置之后，启动服务了还可以导入schema么？可以的
@@ -66,21 +77,28 @@ dn: olcDatabase=config,cn=config
 objectClass: olcDatabaseConfig
 olcDatabase: config
 olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
-olcRootDN: cn=Manager,dc=cjhpc,dc=local
 
 /' /opt/openldap/etc/openldap/slapd.ldif
-## 这里似乎不能写olcRootPW
+## 这里不能写olcRootPW,而写上olcRootDN: cn=Manager,dc=cjhpc,dc=local也没啥用
 
 sed -i 's/dc=my-domain/dc=cjhpc/g;s/dc=com/dc=local/g' /opt/openldap/etc/openldap/slapd.ldif
+perl -pi -e 'print"olcAccess: to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break\n"  if ($_ =~ /^olcSuffix:\ dc=cjhpc,dc=local/)' \
+/opt/openldap/etc/openldap/slapd.ldif
+
 # su ldapd -c "/opt/openldap/sbin/slapadd -n 0 -F /opt/openldap/etc/slapd.d -l /opt/openldap/etc/openldap/slapd.ldif"
 # return error "This account is currently not available", because ldapd user is nologin in /etc/passwd
 /opt/openldap/sbin/slapadd -n 0 -F /opt/openldap/etc/slapd.d -l /opt/openldap/etc/openldap/slapd.ldif
 chown -R ldapd.ldapd /opt/openldap/etc/slapd.d
 chown -R ldapd.ldapd /opt/openldap/var/run/
+chown -R ldapd.ldapd  /opt/openldap/var/openldap-data
 
 ## 强行vi修改 /opt/openldap/etc/slapd.d 里的文件需要重启服务才能生效
 
-## make service file
+## make service file 
+## 这里太诡异了，LAPD_OPTIONS=-F/opt/openldap/etc/slapd.d
+## -F 后边有空格就不能跑，而在shell里边有无空格都可以跑
+## 也许在这个service里边这么写，LAPD_OPTIONS里边的内容被当成一个字符串
+## 而不是两个分开的字符串
 cat <<EOF  > /etc/systemd/system/slapd.service
 [Unit]
 Description=OpenLDAP Server Daemon
@@ -89,12 +107,10 @@ Documentation=man:slapd
 Documentation=man:slapd-mdb
 
 [Service]
-User=ldapd
-Group=ldapd
 Type=forking
 PIDFile=/opt/openldap/var/run/slapd.pid
 Environment="SLAPD_URLS=ldap:/// ldapi:/// ldaps:///"
-Environment="SLAPD_OPTIONS=-F /opt/openldap/etc/slapd.d"
+Environment="SLAPD_OPTIONS=-F/opt/openldap/etc/slapd.d"
 ExecStart=/opt/openldap/libexec/slapd -u ldapd -g ldapd -h \${SLAPD_URLS} \${SLAPD_OPTIONS}
 
 [Install]
@@ -118,5 +134,10 @@ objectclass: organizationalRole
 cn: Manager
 EOF
 
-ldapadd -x -D "cn=Manager,dc=cjhpc,dc=local" -W -f /opt/openldap/etc/openldap/new.ldif
-
+# need password
+# /opt/openldap/bin/ldapadd -x -D "cn=Manager,dc=cjhpc,dc=local" -W -f /opt/openldap/etc/openldap/new.ldif
+## if access ctrl is added in slapd.d/cn\=config/olcDatabase\=\{1\}mdb.ldif as follow: 
+##olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external
+## ,cn=auth manage by * break
+## then restart slapd, passowrd is not needed.
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/new.ldif
