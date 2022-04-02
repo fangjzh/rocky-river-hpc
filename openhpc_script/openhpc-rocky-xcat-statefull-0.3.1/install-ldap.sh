@@ -2,6 +2,12 @@
 ## https://www.openldap.org/software/download/OpenLDAP/openldap-release
 # wget https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.1.tgz
 
+systemctl disable firewalld
+systemctl stop firewalld
+###disable selinux####
+setenforce 0   
+perl -pi -e "s/ELINUX=enforcing/SELINUX=disabled/" /etc/sysconfig/selinux
+
 yum -y -q install gcc make libtool-ltdl-devel  cyrus-sasl-devel  openssl-devel # systemd-devel perl-devel #openssl ##cyrus-sasl-ldap 
 ## install process
 tar -xvzf openldap-2.6.1.tgz
@@ -11,7 +17,7 @@ cd openldap-2.6.1
 ## --enable-crypt --enable-spasswd --enable-slapd --enable-modules \
 ## --enable-rlookups --enable-backends=mod --disable-sql \
 ## --enable-overlays=mod --enable-wt=no --with-systemd --enable-mdb
-./configure --prefix=/opt/openldap --with-tls=openssl --with-cyrus-sasl
+./configure --prefix=/opt/openldap --with-tls=openssl --with-cyrus-sasl --enable-ppolicy 
 make depend
 make
 make install
@@ -21,7 +27,7 @@ cd /root
 ## if the prefix folder already have files, remove it before make install
 
 ## add ldap user
-useradd -r -s /sbin/nologin -d /opt/openldap/etc/slapd.d -m ldapd
+useradd -r -s /sbin/nologin -d /opt/openldap/var -m ldapd
 mkdir -p /opt/openldap/etc/slapd.d
 
 
@@ -60,12 +66,14 @@ if [ -e $sudo_schema ] ; then
   fi
 fi
 
+yum -y -q install openssh-ldap  
+ssh_schema_ldif=`rpm -ql openssh-ldap | grep -i openldap.ldif`
+perl -pi -e 's/core.ldif/core.ldif\ninclude:\ file:\/\/\/usr\/share\/doc\/openssh-ldap\/openssh-lpk-openldap.ldif/' /opt/openldap/etc/openldap/slapd.ldif
+
 mypass=`slappasswd -s '78g*tw23.ysq'`  ### 这条命令每次生成的字符串不一样，而且有特殊字符
 mypass={SSHA}ehNE9DlisIY7rFt6Sf3DWMPVnUoqcRYe
 perl -pi -e 's/secret/'${mypass}'/' /opt/openldap/etc/openldap/slapd.ldif
 
-## 在初始配置之后，启动服务了还可以导入schema么？可以的
-## /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/sudo.ldif
 
 ## 加入"dn: olcDatabase=config,cn=config"
 ## 不写的话默认产生olcDatabase={0}config的
@@ -119,8 +127,24 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-
+systemctl enable slapd
 systemctl start slapd
+
+## 在初始配置之后，启动服务了还可以导入schema么？可以的
+## /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/sudo.ldif
+## /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /usr/share/doc/openssh-ldap/openssh-lpk-openldap.ldif
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/inetorgperson.ldif
+
+## add ppolicy schema, 在tests文件夹里的ppolicy.ldif似乎并不是schema文件，所以那里去了？ 
+### /bin/cp /root/openldap-2.6.1/tests/data/ppolicy.ldif /opt/openldap/etc/openldap/schema
+# cat /root/openldap-2.6.1/tests/data/ppolicy.ldif | awk 'NR>7{print $0}' > /opt/openldap/etc/openldap/schema/ppolicy.ldif
+# sed -i 's/example/cjhpc/g;s/dc=com/dc=local/g' /opt/openldap/etc/openldap/schema/ppolicy.ldif
+# /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/ppolicy.ldif
+
+## 可不可以不用ldapi接口，直接slapadd -F? 
+## /opt/openldap/sbin/slapadd -F /tmp/xxx -f /opt/openldap/etc/openldap/schema/schema/openldap.ldif
+## 不行，这个命令还是只能在空文件夹产生文件
+
 
 cat <<EOF > /opt/openldap/etc/openldap/new.ldif
 dn: dc=cjhpc,dc=local
@@ -134,7 +158,7 @@ objectclass: organizationalRole
 cn: Manager
 EOF
 
-# need password
+# need password  ？
 # /opt/openldap/bin/ldapadd -x -D "cn=Manager,dc=cjhpc,dc=local" -W -f /opt/openldap/etc/openldap/new.ldif
 ## if access ctrl is added in slapd.d/cn\=config/olcDatabase\=\{1\}mdb.ldif as follow: 
 ##olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external
