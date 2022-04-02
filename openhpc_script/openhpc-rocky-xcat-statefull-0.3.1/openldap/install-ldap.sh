@@ -136,6 +136,9 @@ systemctl start slapd
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/inetorgperson.ldif
 
 ## add ppolicy schema, 在tests文件夹里的ppolicy.ldif似乎并不是schema文件，所以那里去了？ 
+## ppolicy.ldif 应该是不需要了，编译完成就会有，在2.4版本里有这个文件，但是和tests文件夹里边的不是一回事
+## tests文件夹下边的应该是一个具体的策略配置
+## 那么，
 ### /bin/cp /root/openldap-2.6.1/tests/data/ppolicy.ldif /opt/openldap/etc/openldap/schema
 # cat /root/openldap-2.6.1/tests/data/ppolicy.ldif | awk 'NR>7{print $0}' > /opt/openldap/etc/openldap/schema/ppolicy.ldif
 # sed -i 's/example/cjhpc/g;s/dc=com/dc=local/g' /opt/openldap/etc/openldap/schema/ppolicy.ldif
@@ -165,3 +168,17 @@ EOF
 ## ,cn=auth manage by * break
 ## then restart slapd, passowrd is not needed.
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/new.ldif
+
+## migrationtools 可以直接下载rpm包，然后解压，把解压到的migrationtools 文件夹拷贝到/usr/share/，并且给里边的脚本以执行权限
+## wget http://mirror.centos.org/centos/7/os/x86_64/Packages/migrationtools-47-15.el7.noarch.rpm
+## 实测是可以用的
+if [ -e ./migrationtools.tgz ] ; then
+  tar -xvzf ./migrationtools.tgz -C /usr/share
+fi
+## migrationtools 产生的文件还需要替换一些字段（dc=xxx,dc=com）才能正确导入
+
+## 接下来配置SSSD 以及 ldap客户端
+yum -y -q install openldap-clients sssd
+authselect select sssd
+perl -ni -e 'if ($_ =~ /^passwd:/ or $_ =~ /^shadow:/ or $_ =~ /^group:/ ) {chomp $_ ; print"$_ ldap\n"}  else {print"$_"} ' /etc/authselect/user-nsswitch.conf
+authselect apply-changes
