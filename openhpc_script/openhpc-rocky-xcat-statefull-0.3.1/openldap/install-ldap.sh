@@ -107,7 +107,7 @@ chown -R ldapd.ldapd  /opt/openldap/var/openldap-data
 ## -F 后边有空格就不能跑，而在shell里边有无空格都可以跑
 ## 也许在这个service里边这么写，LAPD_OPTIONS里边的内容被当成一个字符串
 ## 而不是两个分开的字符串
-cat <<EOF  > /etc/systemd/system/slapd.service
+cat <<EOF  > /usr/lib/systemd/system/slapd.service
 [Unit]
 Description=OpenLDAP Server Daemon
 After=syslog.target network-online.target
@@ -134,6 +134,15 @@ systemctl start slapd
 ## /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/sudo.ldif
 ## /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /usr/share/doc/openssh-ldap/openssh-lpk-openldap.ldif
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/schema/inetorgperson.ldif
+
+## 添加数据库匿名访问权限
+cat <<EOF > /opt/openldap/etc/openldap/addAccess.ldif 
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcAccess
+olcAccess: to * by * read
+EOF
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/addAccess.ldif 
 
 ## add ppolicy schema, 在tests文件夹里的ppolicy.ldif似乎并不是schema文件，所以那里去了？ 
 ## ppolicy.ldif 应该是不需要了，编译完成就会有，在2.4版本里有这个文件，但是和tests文件夹里边的不是一回事
@@ -177,8 +186,113 @@ if [ -e ./migrationtools.tgz ] ; then
 fi
 ## migrationtools 产生的文件还需要替换一些字段（dc=xxx,dc=com）才能正确导入
 
+## 接下来我们来产生一个user 和 group的 ldif 例子
+#useradd -s /bin/bash -M testuser 
+echo "testuser:x:1002:1002::/home/testuser:/bin/bash" > adduser.tmp
+echo "testuser:x:1002:" > addgroup.tmp
+/usr/share/migrationtools/migrate_passwd.pl adduser.tmp | sed 's/dc=padl,dc=com/dc=cjhpc,dc=local/g'> adduser.ldif
+/usr/share/migrationtools/migrate_group.pl addgroup.tmp | sed 's/dc=padl,dc=com/dc=cjhpc,dc=local/g'> addgroup.ldif
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f adduser.ldif
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f addgroup.ldif
+# 接下来可以在 Apache Directory Studio去复制粘贴了
+# 右键 dc=cjhpc,dc=local下边的ou=People下边的uid=testuser，然后New Entry
+# use exsiting entry as temple,选择默认 uid=testuser,ou=People,dc=cjhpc,dc=local
+# 重复下一步，这样会建一个同级别的 entry
+
+# 以上没有设置密码，在Apache Directory Studio设置CRYPT-SHA-512密码好像不管用
+# Apache Directory Studio 学习视频 https://www.bilibili.com/video/av844671738/
+
+## 红帽8已经放弃nslcd的方案了，所以还是用SSSD来搞
 ## 接下来配置SSSD 以及 ldap客户端
-yum -y -q install openldap-clients sssd
-authselect select sssd
-perl -ni -e 'if ($_ =~ /^passwd:/ or $_ =~ /^shadow:/ or $_ =~ /^group:/ ) {chomp $_ ; print"$_ ldap\n"}  else {print"$_"} ' /etc/authselect/user-nsswitch.conf
-authselect apply-changes
+yum -y -q install openldap-clients sssd ## oddjob-mkhomedir
+
+authselect select sssd with-mkhomedir
+## 创建自定义的authselect 文件，-b应该是base,就是以默认sssd配置为基础创建
+# authselect create-profile user-profile -b sssd
+## 这样就创建了 /etc/authselect/custom/user-profile 配置文件夹
+## 然后我们选择我们创建的这个
+## authselect select sssd
+# authselect select custom/user-profile
+
+## 然后做些更改再应用？
+# perl -ni -e 'if ($_ =~ /^passwd:/ or $_ =~ /^shadow:/ or $_ =~ /^group:/ ) {chomp $_ ; print"$_ ldap\n"}  else {print"$_"} ' /etc/authselect/custom/user-profile/nsswitch.conf
+# authselect apply-changes
+
+## 参考https://www.golinuxcloud.com/ldap-client-rhel-centos-8/
+## https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/8/html/configuring_authentication_and_authorization_in_rhel/index
+## 我们不用ssl 或者 slt 加密端口，所以也不要证书
+## 我们暂时也不用sudo权限
+
+## 备份配置文件，这是个牛逼用法，逗号表示分隔，然后{}里边的候选项一个是空的  一个是.original
+cp -r /etc/pam.d{,.original}
+cp /etc/authselect/user-nsswitch.conf{,.back`date +%Y%m%d-%H%M%S`}
+
+## 似乎没有/etc/sssd/sssd.conf文件
+## 参考 https://www.jianshu.com/p/8accfdb33725
+## 这里有个例子 /usr/share/doc/sssd-common/sssd-example.conf
+cat <<EOF > /etc/sssd/sssd.conf
+[sssd]
+config_file_version=2
+services=nss,pam
+domains=default
+
+[nss]
+debug_level = 9
+filter_groups = root
+filter_users = root
+entry_cache_timeout = 300
+entry_cache_nowait_percentage = 75
+
+[pam]
+
+[domain/default]
+debug_level = 9
+auth_provider = ldap
+id_provider = ldap
+chpass_provider = ldap
+
+ldap_schema = rfc2307
+ldap_uri = ldap://127.0.0.1:389
+ldap_search_base = dc=cjhpc,dc=local
+
+access_provider = ldap
+
+# access_filter这个参数尝试了很多种写法，网上众说纷纭，最后发现似乎不用，
+# ldap_search_base+ ldap_user_name+ ldap_user_object_class就能定位搜索到用户信息了
+# ldap_access_filter = (&(&(cn=unix)(memberUid=*)))
+# ldap_access_filter = (&(objectclass=posixAccount))
+# ldap_access_filter = "(&(cn=unix)(|(&(objectClass=posixGroup)(memberUid=*))))
+# ldap_access_filter = (&(objectclass=person)(memberof=[basedn]))
+# ldap_access_filter = memberof=[basedn]
+# ldap_access_filter = (objectclass=person)
+##### 这个可能是和ldap数据库里边的条目相关的，按实际情况修改
+## 我用 migrationtools 导入的应该不用这些
+# ldap_user_object_class = person
+# ldap_user_uid_number = cn
+# ldap_user_name = cn
+#ldap_user_primary_group = primaryGroupID
+#case_sensitive = false
+#ldap_use_tokengroups = False
+#use_fully_qualified_names = True
+
+## 说明还是可以接入ldap的许可账号，我这里就不要了，因为可以匿名读取
+#ldap_default_bind_dn = [binddn] # 接入账号
+#ldap_default_authtok_type = password # 验证方式
+#ldap_default_authtok = xxx # 密码
+ldap_tls_reqcert = never
+ldap_id_use_start_tls = False
+cache_credentials = True
+entry_cache_timeout = 600
+ldap_network_timeout = 3
+EOF
+
+## 上述文件里如果services = nss, pam, autofs，有何区别？ 
+
+chmod 600 /etc/sssd/sssd.conf
+systemctl enable --now sssd  ## 加--now应该是立即启动的意思
+systemctl enable --now oddjobd
+#systemctl restart sssd
+## 
+
+## 现在的问题，Apache Directory Studio 设置的密码无法登录
+

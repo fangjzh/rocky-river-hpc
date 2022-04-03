@@ -57,6 +57,4 @@ EOF
 ## perl -n 和 -p区别是-p会自动打印,chomp 可以去掉换行符 chom可以去掉多个换行符
 ## 修改/etc/nsswitch.conf 在centos 8 里这个是authselect 自动生成的
 perl -ni -e 'if ($_ =~ /^passwd:/ or $_ =~ /^shadow:/ or $_ =~ /^group:/ ) {chomp $_ ; print"$_ ldap\n"}  else {print"$_"} ' /etc/authselect/user-nsswitch.conf
-
-
 authselect apply-changes
