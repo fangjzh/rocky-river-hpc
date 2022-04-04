@@ -4,7 +4,6 @@
 ##
 
 ## 设置一下域名之类的
-if [ 0 == 1 ] ; then
 export sms_eth_internal=ens33
 
 export sms_name=cjhpc
@@ -28,7 +27,7 @@ echo ${cnode_name} > /etc/hostname
 echo "${sms_ip}  ${sms_name}.${domain_name}  ${sms_name}" >>/etc/hosts
 echo "${cnode_ip}  ${cnode_name}.${domain_name}  ${cnode_name}" >>/etc/hosts
 nmcli g hostname ${cnode_name}
-fi
+
 
 ########disable firewall#####
 systemctl disable firewalld
