@@ -168,6 +168,14 @@ dc: cjhpc
 dn: cn=Manager,dc=cjhpc,dc=local
 objectclass: organizationalRole
 cn: Manager
+
+dn: ou=People,dc=cjhpc,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Group,dc=cjhpc,dc=local
+objectClass: organizationalUnit
+ou: Group
 EOF
 
 # need password  ？

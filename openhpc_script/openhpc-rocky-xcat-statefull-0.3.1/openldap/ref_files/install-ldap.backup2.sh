@@ -168,6 +168,14 @@ dc: cjhpc
 dn: cn=Manager,dc=cjhpc,dc=local
 objectclass: organizationalRole
 cn: Manager
+
+dn: ou=People,dc=cjhpc,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Group,dc=cjhpc,dc=local
+objectClass: organizationalUnit
+ou: Group
 EOF
 
 # need password  ？
@@ -348,10 +356,10 @@ getent passwd testuser ## 得到的字段第二个是*,表示它不能登录？
 ## 参考：https://blog.csdn.net/u011607971/article/details/86153804
 
 openssl genrsa -out laoshirenCA.key 2048
-openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem  -batch
+openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem -batch # -subj  "/CN=127.0.0.1"
 ## 不加 -batch会出现很多东西要填写
 openssl genrsa -out laoshirenldap.key 2048
-openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -batch
+openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -batch # -subj "/CN=127.0.0.1"
 openssl x509 -req -in laoshirenldap.csr -CA laoshirenCA.pem -CAkey laoshirenCA.key -CAcreateserial -out laoshirenldap.crt -days 1460 -sha256
 
 mkdir -p /opt/openldap/etc/certs
@@ -378,16 +386,19 @@ EOF
 
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f  certs.ldif
 
+export PATH=/opt/openldap/bin:$PATH
 ## 测试
 #ldapsearch -x -LLL uid
 # netstat -nlp -t |grep slapd # 查看端口
 # 查询用户信息，只能用389端口，636返回-1
 ldapsearch -LLL -h localhost -p 389 -x -b "ou=People,dc=cjhpc,dc=local" -D "cn=Manager,dc=cjhpc,dc=local" -w  '78g*tw23.ysq' -s sub "uid=testuser"
+## 端口验证OK!
+ldapsearch -H ldaps://localhost -x -b 'dc=cjhpc,dc=local' '(objectclass=*)'
 
 # 参考 https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_authentication_and_authorization_in_rhel/configuring-sssd-to-use-ldap-and-require-tls-authentication_configuring-authentication-and-authorization-in-rhel
 # 首先要下载证书
 # mkdir -p  /etc/openldap/certs/
-cp  /opt/openldap/etc/certs/laoshirenCA.pem  /etc/openldap/certs/
+/bin/cp  /opt/openldap/etc/certs/laoshirenCA.pem  /etc/openldap/certs/
 
 cp /etc/openldap/ldap.conf{,.back`date +%Y%m%d-%H%M%S`}
 
@@ -426,4 +437,8 @@ openssl verify /opt/openldap/etc/certs/laoshirenldap.crt
 # 导致证书生成的时候出现 error 18 at 0 depth lookup:self signed certificate 错误
 # 自签名证书  似乎  无法正常工作。。。。 这是得放弃么？？？
 
+## 得用另一台机器名签发根证书，客户端sssd不报错了
+## 但是
 
+## 重新配置之后 服务端也不报错了，但是还是完成不了认证
+## 似乎在apach directory studio 改成不加密的密码可以完成认证，但是还是无法登录
