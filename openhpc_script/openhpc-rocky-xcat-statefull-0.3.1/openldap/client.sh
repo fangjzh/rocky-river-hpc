@@ -1,6 +1,5 @@
 ## client
 ##  这个在server 执行也是可以的
-
 ##
 
 ## 设置一下域名之类的
@@ -45,7 +44,7 @@ cat <<EOF >> /etc/openldap/ldap.conf
 URI ldap://cjhpc.local
 BASE dc=cjhpc,dc=local
 TLS_CACERTDIR /etc/openldap/certs
-TLS_CACERT /etc/openldap/certs/laoshirenCA.pem
+TLS_CACERT /etc/openldap/certs/single-sign-CA.pem
 TLS_REQCERT allow
 EOF
 
@@ -54,7 +53,7 @@ EOF
 ##  会导致认证服务终止
 
 ### 这里需要输入密码
-scp  fang@cjhpc.local:/opt/openldap/etc/certs/laoshirenCA.pem  /etc/openldap/certs/
+scp  fang@cjhpc.local:/opt/openldap/etc/certs/single-sign-CA.pem  /etc/openldap/certs/
 
 # 测试 -d 是debug
 ldapsearch -H ldap://cjhpc.local -x -d 1 -b 'dc=cjhpc,dc=local' '(objectclass=*)'
@@ -143,7 +142,7 @@ ldap_tls_reqcert = allow
 #ldap_tls_reqcert = never
 
 cache_credentials = True
-ldap_tls_cacert = /etc/openldap/certs/laoshirenCA.pem
+ldap_tls_cacert = /etc/openldap/certs/single-sign-CA.pem
 #ldap_tls_reqcert = hard
 
 ldap_id_use_start_tls = False

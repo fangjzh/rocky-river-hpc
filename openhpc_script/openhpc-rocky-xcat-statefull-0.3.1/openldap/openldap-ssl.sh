@@ -3,6 +3,8 @@
 #参考：
 #https://www.golinuxcloud.com/configure-openldap-with-tls-certificates/
 #https://www.golinuxcloud.com/ldap-client-rhel-centos-8/
+#https://blog.csdn.net/weixin_42167759/article/details/80509806
+#https://blog.csdn.net/u011607971/article/details/86153804
 
 ## 设置一下域名之类的
 export sms_eth_internal=ens33
@@ -198,38 +200,45 @@ EOF
 
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f /opt/openldap/etc/openldap/new_user_group.ldif
 
+echo "root无法直接修改testuser用户密码^_^,
+初始化时，需要在Apache Directory studio里边修改testuser的密码，
+plantext和SSHA两种目前测试是可以用的，其他加密不一定行（不晓得要怎么设置）
+目前的认证方式就是简单认证，
+cn=Manager,dc=cjhpc,dc=local 然后加上密码就可以登录，登录之后，
+可以在Apache Directory studio，复制用户和组，然后修改相关信息"
+
 ########################################################################
 ########################################################################
-### 证书部署
-openssl genrsa -out laoshirenCA.key 2048
-openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem   -subj  "/CN=cnode01.local" #-batch 
+### 证书部署，之前不搞证书弄了很久没成功，不知道有没有不搞证书的办法？
+openssl genrsa -out single-sign-CA.key 2048
+openssl req -x509 -new -nodes -key single-sign-CA.key -sha256 -days 1024 -out single-sign-CA.pem   -subj  "/CN=cnode01.local" #-batch 
 ## 不加 -batch或者域名会出现很多东西要填写
 ## 两个域名要不一样，不然ssl会报错 tls_process_server_certificate:certificate verify failed (self signed certificate).
-openssl genrsa -out laoshirenldap.key 2048
-openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -subj "/CN=cjhpc.local" # -batch # 
-openssl x509 -req -in laoshirenldap.csr -CA laoshirenCA.pem -CAkey laoshirenCA.key -CAcreateserial -out laoshirenldap.crt -days 1460 -sha256
+openssl genrsa -out single-sign-ldap.key 2048
+openssl req -new -key single-sign-ldap.key -out single-sign-ldap.csr -subj "/CN=cjhpc.local" # -batch # 
+openssl x509 -req -in single-sign-ldap.csr -CA single-sign-CA.pem -CAkey single-sign-CA.key -CAcreateserial -out single-sign-ldap.crt -days 1460 -sha256
 
 mkdir -p /opt/openldap/etc/certs
-/bin/cp laoshirenldap.{crt,key} laoshirenCA.pem /opt/openldap/etc/certs
+/bin/cp single-sign-ldap.{crt,key} single-sign-CA.pem /opt/openldap/etc/certs
 chown -R ldapd:ldapd /opt/openldap/etc/certs
 
 # 按照此顺序（报错时切换顺序尝试 ）
-# 注意权限如果有问题也会出错，因为默认的laoshirenldap.key 是 -rw-------，只有所有者才能读取
+# 注意权限如果有问题也会出错，因为默认的single-sign-ldap.key 是 -rw-------，只有所有者才能读取
 cat <<EOF > certs.ldif
 dn: cn=config
 changetype: modify
 replace: olcTLSCACertificateFile
-olcTLSCACertificateFile: /opt/openldap/etc/certs/laoshirenCA.pem
+olcTLSCACertificateFile: /opt/openldap/etc/certs/single-sign-CA.pem
 
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /opt/openldap/etc/certs/laoshirenldap.key
+olcTLSCertificateKeyFile: /opt/openldap/etc/certs/single-sign-ldap.key
 
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateFile
-olcTLSCertificateFile: /opt/openldap/etc/certs/laoshirenldap.crt
+olcTLSCertificateFile: /opt/openldap/etc/certs/single-sign-ldap.crt
 EOF
 
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f  certs.ldif
@@ -237,7 +246,10 @@ EOF
 ## 测试
 ## ldapsearch  -D 'cn=Manager,dc=cjhpc,dc=local' -w 78g*tw23.ysq -ZZ
 
-## 添加数据库匿名访问权限 
+## 添加数据库访问权限，不加客户端无法完成认证
+## 目前的权限可以完成认证，且用户可以修改密码
+##（可以在Apache Directory studio修改testuser密码后测试一下testuser）
+## 且匿名无法查看ldap数据库
 cat <<EOF > ./addAccess.ldif 
 dn: olcDatabase={1}mdb,cn=config
 changetype: modify
