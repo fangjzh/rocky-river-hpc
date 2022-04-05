@@ -4,7 +4,7 @@
 ##
 
 ## 设置一下域名之类的
-if [ 0 == 1 ] ; then
+if [ -n "$1" ] ; then
 export sms_eth_internal=ens33
 
 export sms_name=cjhpc
@@ -107,8 +107,6 @@ access_provider = simple
 #simple_allow_users = testuser
 #simple_allow_groups = groupname
 
-
-cache_credentials = True
 # ldap_pwd_policy = shadow
 filter_users = root
 
@@ -130,7 +128,8 @@ filter_users = root
 #ldap_use_tokengroups = False
 #use_fully_qualified_names = True
 
-## 说明还是可以接入ldap的许可账号，我这里就不要了，因为可以匿名读取
+## 说明还是可以接入ldap的许可账号，这里不写无法修改用户密码
+## 可能是配合chpass_provider = ldap 来的
 # 接入账号
 ldap_default_bind_dn =  cn=Manager,dc=cjhpc,dc=local
 # 验证方式
@@ -148,7 +147,7 @@ ldap_tls_cacert = /etc/openldap/certs/laoshirenCA.pem
 #ldap_tls_reqcert = hard
 
 ldap_id_use_start_tls = False
-cache_credentials = True
+
 entry_cache_timeout = 600
 ldap_network_timeout = 3
 EOF
@@ -164,5 +163,17 @@ EOF
 chmod 600 /etc/sssd/sssd.conf
 systemctl enable --now sssd  ## 加--now应该是立即启动的意思
 systemctl enable --now oddjobd
+
+## 加密密码，没啥用，不要了
+## yum -y -q install sssd-tools
+## 这里会覆盖 sssd.conf 里边的内容
+#ldap_default_authtok_type = obfuscated_password
+#ldap_default_authtok =xxxxxx  ##加密密码
+#sss_obfuscate --domain MyLDAP
+# echo 78g*tw23.ysq |  sss_obfuscate --domain MyLDAP -s
+## 好像加密之后 无法修改普通用户密码了，也就是无法完成ldap的rootDN授权
+## 这个需要和 slapd 服务端配合设置加密密码么？ 
+## 而且加密了还可以解密https://github.com/mludvig/sss_deobfuscate
+systemctl restart sssd
 
 

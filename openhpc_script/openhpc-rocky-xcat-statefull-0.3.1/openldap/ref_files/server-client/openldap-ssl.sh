@@ -229,15 +229,16 @@ EOF
 
 ### 证书部署
 openssl genrsa -out laoshirenCA.key 2048
-openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem -batch # -subj  "/CN=127.0.0.1"
-## 不加 -batch会出现很多东西要填写
+openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem   -subj  "/CN=cnode01.local" #-batch 
+## 不加 -batch或者域名会出现很多东西要填写
+## 两个域名要不一样，不然ssl会报错 tls_process_server_certificate:certificate verify failed (self signed certificate).
 openssl genrsa -out laoshirenldap.key 2048
-openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -batch # -subj "/CN=127.0.0.1"
+openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -subj "/CN=cjhpc.local" # -batch # 
 openssl x509 -req -in laoshirenldap.csr -CA laoshirenCA.pem -CAkey laoshirenCA.key -CAcreateserial -out laoshirenldap.crt -days 1460 -sha256
 
 mkdir -p /opt/openldap/etc/certs
-chown -R ldapd:ldapd /opt/openldap/etc/certs
 /bin/cp laoshirenldap.{crt,key} laoshirenCA.pem /opt/openldap/etc/certs
+chown -R ldapd:ldapd /opt/openldap/etc/certs
 
 # 按照此顺序（报错时切换顺序尝试，就是上边生成各种证书的时间顺序 NB!）
 cat <<EOF > certs.ldif

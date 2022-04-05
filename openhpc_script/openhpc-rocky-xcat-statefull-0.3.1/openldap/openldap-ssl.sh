@@ -1,4 +1,5 @@
-##
+## 测试在rocky linux 8.5 中进行，两台虚拟机
+## 网卡都是两个 桥接+内部网络
 #参考：
 #https://www.golinuxcloud.com/configure-openldap-with-tls-certificates/
 #https://www.golinuxcloud.com/ldap-client-rhel-centos-8/
@@ -40,12 +41,21 @@ nowdir=`pwd`
 
 wget https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-2.6.1.tgz
 
+if [ -e ./openldap-2.6.1.tgz ] ; then
+echo "find openldap-2.6.1.tgz, continue...."
+else
+echo "no openldap-2.6.1.tgz, exit ....."
+fi
+
 yum -y -q install gcc make libtool-ltdl-devel  cyrus-sasl-devel  openssl-devel # systemd-devel perl-devel #openssl ##cyrus-sasl-ldap 
 ## install process
 tar -xvzf openldap-2.6.1.tgz
 cd openldap-2.6.1
 
-./configure --prefix=/opt/openldap --with-tls=openssl --with-cyrus-sasl --enable-ppolicy 
+./configure --prefix=/opt/openldap --with-tls=openssl --with-cyrus-sasl --enable-ppolicy  --enable-spasswd 
+##  --enable-spasswd 可以支持SASL认证，在slapd.ldif里边指定密码类型么？
+## 参考 https://www.openldap.org/doc/admin24/sasl.html#DIGEST-MD5
+## 似乎有些复杂，先不整了
 make depend
 make
 make install
@@ -192,17 +202,19 @@ EOF
 ########################################################################
 ### 证书部署
 openssl genrsa -out laoshirenCA.key 2048
-openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem -batch # -subj  "/CN=cjhpc.local"
-## 不加 -batch会出现很多东西要填写
+openssl req -x509 -new -nodes -key laoshirenCA.key -sha256 -days 1024 -out laoshirenCA.pem   -subj  "/CN=cnode01.local" #-batch 
+## 不加 -batch或者域名会出现很多东西要填写
+## 两个域名要不一样，不然ssl会报错 tls_process_server_certificate:certificate verify failed (self signed certificate).
 openssl genrsa -out laoshirenldap.key 2048
-openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -batch # -subj "/CN=cjhpc.local"
+openssl req -new -key laoshirenldap.key -out laoshirenldap.csr -subj "/CN=cjhpc.local" # -batch # 
 openssl x509 -req -in laoshirenldap.csr -CA laoshirenCA.pem -CAkey laoshirenCA.key -CAcreateserial -out laoshirenldap.crt -days 1460 -sha256
 
 mkdir -p /opt/openldap/etc/certs
-chown -R ldapd:ldapd /opt/openldap/etc/certs
 /bin/cp laoshirenldap.{crt,key} laoshirenCA.pem /opt/openldap/etc/certs
+chown -R ldapd:ldapd /opt/openldap/etc/certs
 
-# 按照此顺序（报错时切换顺序尝试，就是上边生成各种证书的时间顺序? ）
+# 按照此顺序（报错时切换顺序尝试 ）
+# 注意权限如果有问题也会出错，因为默认的laoshirenldap.key 是 -rw-------，只有所有者才能读取
 cat <<EOF > certs.ldif
 dn: cn=config
 changetype: modify
@@ -222,4 +234,16 @@ EOF
 
 /opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f  certs.ldif
 
+## 测试
+## ldapsearch  -D 'cn=Manager,dc=cjhpc,dc=local' -w 78g*tw23.ysq -ZZ
+
+## 添加数据库匿名访问权限 
+cat <<EOF > ./addAccess.ldif 
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcAccess
+olcAccess: to *  by self write by anonymous auth by * read
+EOF
+/opt/openldap/bin/ldapadd -Y EXTERNAL -H ldapi:/// -f ./addAccess.ldif  
+## 这个olcAccess 是有顺序的，先写的生效，比如这里匿名用户被授权“认证”，虽然匿名用户也在by * read 里边，
 
