@@ -57,6 +57,7 @@ vi  xCAT_plugin/ipmi.pm   找 ipmihash 关键词
 sub reseat_node {
 ......
         my $ipmitab = xCAT::Table->new("ipmi");
+        my $ipmihash = $ipmitab->getNodesAttribs([$fpc], [ 'bmc', 'username', 'password' , 'port' ]);
 ......
         my $nodeuser = $authdata->{$fpc}->{username};
         my $nodepass = $authdata->{$fpc}->{password};
@@ -126,7 +127,7 @@ sub donode {
 	
 
 
------------------------ (无用)
+-----------------------
 sub getipmicons {
     my $argr = shift;
 
@@ -140,91 +141,3 @@ sub getipmicons {
     my $ipmisess = xCAT::IPMI->new(bmc => $argr->[1], port => $argr->[2], userid => $argr->[3], password => $argr->[4]);
 
 -----------------------
-
-
-----------------------------------
-    #my @threads;
-    my @donargs = ();
-    if ($request->{command}->[0] =~ /fru/) {
-        my $vpdtab = xCAT::Table->new('vpd');
-        $vpdhash = $vpdtab->getNodesAttribs($noderange, [qw(serial mtm asset)]);
-    }
-    my $ipmihash = $ipmitab->getNodesAttribs($noderange, [ 'bmc', 'username', 'password' ,'port']);
-    my $authdata = xCAT::PasswordUtils::getIPMIAuth(noderange => $noderange, ipmihash => $ipmihash);
-    foreach (@$noderange) {
-        my $node     = $_;
-        my $nodeuser = $authdata->{$node}->{username};
-        my $nodepass = $authdata->{$node}->{password};
-        my $nodeport = $ipmihash->{$node}->[0]->{port};
-        my $nodeip   = $node;
-        my $ent;
-        if (defined($ipmitab)) {
-            $ent = $ipmihash->{$node}->[0];
-            if (ref($ent) and defined $ent->{bmc}) { $nodeip = $ent->{bmc}; }
-        }
-        if ($nodeip =~ /,/ and grep ({ $_ eq $request->{command}->[0] } qw/rinv reventlog rvitals rspconfig/)) { #multi-node x3950 X5, for example
-            my $bmcnum = 1;
-            foreach (split /,/, $nodeip) {
-                push @donargs, [ $node, $_, $nodeport, $nodeuser, $nodepass, $bmcnum ];
-                $bmcnum += 1;
-            }
-        } else {
-            $nodeip =~ s/,.*//;    #stri
-            push @donargs, [ $node, $nodeip, $nodeport, $nodeuser, $nodepass, 1 ];
-        }
-    }
-	
-	-------------------------
-	    # NOTE (chenglch) rflash for one node need about 5-10 minutes. There is no need to rflash node
-    # one by one, fork a process for each node.
-    if ($command eq 'rflash') {
-        start_rflash_processes(\@donargs, $ipmitimeout, $ipmitrys, $command, -args => \@exargs);
-    }
-    else {
-        foreach (@donargs) {
-            donode($_->[0], $_->[1], $_->[2], $_->[3], $_->[4], $_->[5],  $ipmitimeout, $ipmitrys, $command, -args => \@exargs);
-        }
-        while (xCAT::IPMI->waitforrsp()) { yield }
-    }
-
---------------------------
-sub donode {
-    my $node      = shift;
-    my $port      = shift;
-    my $bmcip     = shift;
-    my $user      = shift;
-    my $pass      = shift;
-    my $bmcnum    = shift;
-    my $timeout   = shift;
-    my $retries   = shift;
-    my $command   = shift;
-    my %namedargs = @_;
-    my $extra     = $namedargs{-args};
-    my @exargs    = @$extra;
-    $sessiondata{$node} = {
-        node => $node, #this seems redundant, but some code will not be privy to what the key was
-        bmcnum => $bmcnum,
-        #ipmisession => xCAT::IPMI->new(bmc => $bmcip, userid => $user, password => $pass),
-        command    => $command,
-        extraargs  => \@exargs,
-        subcommand => $exargs[0],
-        xcatdebugmode => $xcatdebugmode,
-        outfunc => $callback,
-    };
-    if ($command eq "rpower" and $exargs[0] eq "reseat") {
-        on_bmc_connect(0, $sessiondata{$node});
-        return 0;
-    }
-    $sessiondata{$node}->{ipmisession} = xCAT::IPMI->new(bmc => $bmcip, userid => $user, password => $pass, node => $node, port => $port);
-    if ($sessiondata{$node}->{ipmisession}->{error}) {
-        xCAT::SvrUtils::sendmsg([ 1, $sessiondata{$node}->{ipmisession}->{error} ], $callback, $node, %allerrornodes);
-    } else {
-        my ($rc, @output) = ipmicmd($sessiondata{$node});
-        sendoutput($rc, @output);
-        yield;
-        return $rc;
-    }
-
-    #my $msgtoparent=freeze(\@outhashes);
-    # print $outfd $msgtoparent;
-}

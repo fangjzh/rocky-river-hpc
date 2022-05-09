@@ -6,6 +6,8 @@ source ./env.sh
 ########## add hack sulotion of rocky os support #######
 # cd ${package_dir}
 perl -pi -e 'print "    \"1636882174.934804\" => \"rocky8.5\",      #x86_64\n" if $. == 17' /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
+/bin/cp xcat_2.16.4_crack_vbmc/xCAT/*.pm /opt/xcat/lib/perl/xCAT
+/bin/cp xcat_2.16.4_crack_vbmc/xCAT_plugin/*.pm /opt/xcat/lib/perl/xCAT_plugin
 
 systemctl restart xcatd
 # cd ~

@@ -410,7 +410,7 @@ passed as argument rather than by table value',
         descriptions => {
             node => 'The node name or group name.',
             bmc  => 'The hostname of the BMC adapter.',
-            port  => 'The port of the ipmi traffic (UDP).',
+            port  => 'The port of the ipmi traffic (UDP). default is 623',
             bmcport => 'In systems with selectable shared/dedicated ethernet ports, this parameter can be used to specify the preferred port. 0 means use the shared port, 1 means dedicated, blank is to not assign.
 
            The following special cases exist for IBM System x servers:
