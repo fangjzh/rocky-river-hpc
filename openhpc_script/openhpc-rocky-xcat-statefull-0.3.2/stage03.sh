@@ -44,3 +44,9 @@ nodeset compute osimage=${image_choose}
 
 ### add postbootscripts to compute node ####
 chdef compute -p postbootscripts=mypostboot
+
+######## add ipmi support ######
+ # nodech compute nodehm.power=ipmi nodehm.mgt=ipmi
+ # nodech cnode01 ipmi.bmc=10.0.0.2 ipmi.username=admin ipmi.password=password
+ # nodech cnode02 ipmi.bmc=10.0.0.3 ipmi.port=623  ipmi.username=admin ipmi.password=password
+ # lsdef -t node cnode02
