@@ -8,7 +8,7 @@ virsh domiflist cnode03
 
 source env.sh
 c_name[0]=cnode03
-c_ip[0]=${c_ip_pre}02
+c_ip[0]=${c_ip_pre}03
 c_mac[0]=52:54:00:fb:69:a1
 Sockets[0]=1 
 CoresPerSocket[0]=2 
