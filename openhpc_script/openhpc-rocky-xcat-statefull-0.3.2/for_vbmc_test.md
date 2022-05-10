@@ -1,5 +1,5 @@
 ### first install qemu-kvm
-参考: [# ubuntu20.04安装KVM虚拟机](https://blog.csdn.net/ymz641/article/details/121563579)
+参考: [ubuntu20.04安装KVM虚拟机](https://blog.csdn.net/ymz641/article/details/121563579)
 ```bash
 sudo apt install qemu qemu-kvm libvirt-daemon-system libvirt-clients virt-manager virtinst bridge-utils
 ```
