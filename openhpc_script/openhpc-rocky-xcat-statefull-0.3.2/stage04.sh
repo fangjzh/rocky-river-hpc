@@ -89,7 +89,7 @@ systemctl restart redis
 mkdir -p /opt/n9e && cd /opt/n9e
 
 # 去 https://github.com/didi/nightingale/releases 找最新版本的包，文档里的包地址可能已经不是最新的了
-tarball=n9e-5.3.4.tar.gz
+tarball=n9e-5.7.0.tar.gz
 # urlpath=https://github.com/didi/nightingale/releases/download/v5.0.0-ga-06/${tarball}
 # wget $urlpath || exit 1
 
@@ -124,6 +124,15 @@ perl -ni -e 'print; print"After=network.target mariadb.service prometheus.servic
 systemctl daemon-reload
 systemctl enable n9e-server
 systemctl restart n9e-server
+
+### web api
+tarball=n9e-fe-5.3.0.tar.gz
+# 去 https://github.com/n9e/fe-v5/releases 找最新版本的包，文档里的包地址可能已经不是最新的了
+# urlpath=https://github.com/n9e/fe-v5/releases/download/v5.3.0/${tarball}
+# wget $urlpath || exit 1
+cd /opt/n9e
+tar zxvf ${package_dir}/nightingleV5/${tarball}
+
 systemctl enable n9e-webapi
 systemctl restart n9e-webapi
 ##systemctl status n9e-server

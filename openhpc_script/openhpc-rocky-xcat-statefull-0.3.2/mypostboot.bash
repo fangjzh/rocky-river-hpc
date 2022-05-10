@@ -74,3 +74,34 @@ authconfig --update --enablenis
 ###
 systemctl restart rpcbind ypbind
 
+### 这一段在计算节点上运行即可监控计算节点，注意计算节点要时间同步
+cat <<EOF > /etc/systemd/system/telegraf.service
+[Unit]
+Description="telegraf"
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/opt/ohpc/pub/apps/telegraf/telegraf --config telegraf.conf
+WorkingDirectory=/opt/ohpc/pub/apps/telegraf
+
+SuccessExitStatus=0
+LimitNOFILE=65536
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=telegraf
+KillMode=process
+KillSignal=SIGQUIT
+TimeoutStopSec=5
+Restart=always
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable telegraf
+systemctl restart telegraf
+systemctl status telegraf
