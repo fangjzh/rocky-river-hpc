@@ -36,3 +36,5 @@ systemctl restart slurmctld
 
 pdsh -w cnode0[1-2] systemctl restart munge
 pdsh -w cnode0[1-2] systemctl restart slurmd
+
+scontrol update NodeName=cnode0p[1-3] State=RESUME
