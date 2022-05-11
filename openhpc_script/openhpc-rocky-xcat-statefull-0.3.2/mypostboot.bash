@@ -20,6 +20,10 @@ echo "nameserver ${sms_ip}" >> /etc/resolv.conf
 ###install software into ${nodename} node ###
 yum -y -q install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
 
+perl -pi -e "s/remote-fs.target.*/remote-fs.target network-online.target/" /usr/lib/systemd/system/slurmd.service
+perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
+systemctl daemon-reload
+
 systemctl  enable munge 
 systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
