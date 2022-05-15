@@ -11,7 +11,8 @@ echo now exit....
 exit
 
 filelist=(
-n9e-5.3.4.tar.gz                     
+n9e-5.7.0.tar.gz 
+n9e-fe-5.3.0.tar.gz                    
 prometheus-2.28.0.linux-amd64.tar.gz 
 telegraf-1.21.4_linux_amd64.tar.gz   
 )
@@ -242,6 +243,36 @@ systemctl enable telegraf
 systemctl restart telegraf
 systemctl status telegraf
 
+
+################################################################
+##  这个在repo里边有，可以直接yum install 到时替换一下
+## install grafana-8.1.0-1.x86_64.rpm
+filelist=(
+grafana-8.1.0-1.x86_64.rpm
+)
+
+for ifile in ${filelist[@]}
+do
+  if [ ! -e ${package_dir}/${ifile} ] ; then
+  echo "${ifile} is not exist!!!"
+  exit
+fi
+done
+
+rpm -i ${package_dir}/grafana-8.5.2-1.x86_64.rpm
+systemctl daemon-reload
+systemctl enable grafana-server.service
+
+
+echo "ip:localhost port:3000 user and password:admin"
+### You can start grafana-server by executing
+systemctl start grafana-server.service
+
+
+echo "======================================================="
+echo "boot and wait the compute node install before stage 05!"
+echo "======================================================="
+
 ######################################################
 ######################################################
 ######################################################
@@ -309,31 +340,3 @@ systemctl enable prometheus-slurm-exporter
 systemctl start prometheus-slurm-exporter
 systemctl restart prometheus
 
-################################################################
-##  这个在repo里边有，可以直接yum install 到时替换一下
-## install grafana-8.1.0-1.x86_64.rpm
-filelist=(
-grafana-8.1.0-1.x86_64.rpm
-)
-
-for ifile in ${filelist[@]}
-do
-  if [ ! -e ${package_dir}/${ifile} ] ; then
-  echo "${ifile} is not exist!!!"
-  exit
-fi
-done
-
-rpm -i ${package_dir}/grafana-8.1.0-1.x86_64.rpm
-systemctl daemon-reload
-systemctl enable grafana-server.service
-
-
-echo "ip:localhost port:3000 user and password:admin"
-### You can start grafana-server by executing
-systemctl start grafana-server.service
-
-
-echo "======================================================="
-echo "boot and wait the compute node install before stage 05!"
-echo "======================================================="

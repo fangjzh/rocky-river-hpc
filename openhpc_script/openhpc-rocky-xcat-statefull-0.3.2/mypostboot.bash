@@ -79,6 +79,9 @@ authconfig --update --enablenis
 systemctl restart rpcbind ypbind
 
 ### 这一段在计算节点上运行即可监控计算节点，注意计算节点要时间同步
+telegraf=1
+if [ $telegraf ] ; then
+
 cat <<EOF > /etc/systemd/system/telegraf.service
 [Unit]
 Description="telegraf"
@@ -109,3 +112,5 @@ systemctl daemon-reload
 systemctl enable telegraf
 systemctl restart telegraf
 systemctl status telegraf
+
+fi
