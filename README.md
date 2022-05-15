@@ -58,3 +58,7 @@ stage06.sh 安装了额外的编译器等
 - [ ] BenchMark
 - [ ] 服务检测与修复
 - [ ] 写文档
+
+### Done!
+- [x] 决定了，名字叫“岩川”，英文名叫Rocky River。
+- [x] 新建一个文件夹叫做Rocky-River.
