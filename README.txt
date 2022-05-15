@@ -57,3 +57,4 @@ stage06.sh 安装了额外的编译器等
 - [ ] InfiniBand等硬件
 - [ ] BenchMark
 - [ ] 服务检测与修复
+- [ ] 写文档
