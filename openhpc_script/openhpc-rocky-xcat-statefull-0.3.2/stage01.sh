@@ -185,10 +185,10 @@ echo SLURMD_OPTIONS="--conf-server ${sms_ip}" > /etc/sysconfig/slurmd
 ## a fixed template should be prepared, sence the default service file in different edition
 ## is different
 perl -pi -e "s/munge.service.*/munge.service mariadb.service/" /usr/lib/systemd/system/slurmdbd.service
-perl -pi -e "s/remote-fs.target.*/remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
-perl -pi -e "s/munge.service.*/munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
-perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmctld.service
-perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
+perl -pi -e "s/remote-fs.target.*/network-online.target remote-fs.target slurmctld.service/" /usr/lib/systemd/system/slurmd.service
+perl -pi -e "s/munge.service.*/network-online.target munge.service slurmdbd.service named.service/"   /usr/lib/systemd/system/slurmctld.service
+perl -pi -e 'print"Wants=network-online.target  slurmdbd.service named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmctld.service
+perl -pi -e 'print"Wants=network-online.target slurmctld.service named.service\n" if $. == 4'  /usr/lib/systemd/system/slurmd.service
 systemctl daemon-reload
 systemctl enable slurmctld
 systemctl enable slurmd
