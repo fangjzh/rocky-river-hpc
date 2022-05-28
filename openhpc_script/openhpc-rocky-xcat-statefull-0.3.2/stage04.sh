@@ -248,7 +248,7 @@ systemctl status telegraf
 ##  这个在repo里边有，可以直接yum install 到时替换一下
 ## install grafana-8.1.0-1.x86_64.rpm
 filelist=(
-grafana-8.1.0-1.x86_64.rpm
+grafana-8.5.2-1.x86_64.rpm
 )
 
 for ifile in ${filelist[@]}
