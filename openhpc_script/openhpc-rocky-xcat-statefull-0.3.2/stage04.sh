@@ -63,7 +63,7 @@ EOF
 systemctl daemon-reload
 systemctl enable prometheus
 systemctl restart prometheus
-systemctl status prometheus
+#systemctl status prometheus
 
 
 
@@ -241,7 +241,7 @@ EOF
 systemctl daemon-reload
 systemctl enable telegraf
 systemctl restart telegraf
-systemctl status telegraf
+#systemctl status telegraf
 
 
 ################################################################
