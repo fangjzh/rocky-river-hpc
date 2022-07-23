@@ -4,7 +4,7 @@
 项目主要参考openhpc官网的手册，本项目脚本可以供初学者参考学习。
 如果觉得本项目对你有帮助，请不要吝惜在GitHub上给我一个Star。
 项目地址：
-https://github.com/fangjzh/hpc_script
+https://github.com/fangjzh/rocky-river-hpc
 
 1. 该项目想做一个快速部署的HPC安装程序
 2. 该项目被设计成离线安装的模式，能在无网络的环境部署
@@ -50,7 +50,6 @@ stage06.sh 安装了额外的编译器等
   未完待续！！！！
 
 ### To do list
-- [ ] 给项目取个名字，建立一个新的二级目录，repo就不改了
 - [ ] 将安装步骤按功能分离
 - [ ] 可选组件
 - [ ] 学习slurm
@@ -64,3 +63,4 @@ stage06.sh 安装了额外的编译器等
 ### Done!
 - [x] 决定了，名字叫“岩川”，英文名叫Rocky River。
 - [x] 新建一个文件夹叫做Rocky-River.
+- [x] 给项目取个名字，建立一个新的二级目录
