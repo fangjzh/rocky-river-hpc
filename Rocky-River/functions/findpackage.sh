@@ -1,6 +1,8 @@
 #!/bin/bash
 
-res_tmp=(`find /root /mnt /media -name Rocky-8.5-x86_64-dvd1.iso`)
+iso_name=Rocky-8.6-x86_64-dvd1.iso
+
+res_tmp=(`find /root /mnt /media /run/media -name ${iso_name}`)
 if [ -z ${res_tmp[0]} ]; then
   echo "没有找到系统镜像！"
 exit 11
@@ -9,7 +11,7 @@ else
   iso_path=${iso_path_f%/*}
 fi
 
-res_tmp=(`find /root /mnt /media -name dep-packages.tar`)
+res_tmp=(`find /root /mnt /media /run/media -name dep-packages.tar`)
 if [ -z ${res_tmp[0]} ]; then
   echo "没有找到安装包文件！"
   exit 12
