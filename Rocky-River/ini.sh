@@ -12,39 +12,74 @@
 ### 同样地添加节点脚本
 ##################################
 
+### 配置文件产生起始
+### 删除先前产生的配置文件
+if [ -e env.text ] ; then
+    rm env.text
+fi
+
+#########################################
+#############-----int 0-----#############
+#########################################
 ### 检查脚本文件的权限与完整性
 filelist=(
-cname.sh
-#cnetwork.sh
+reg_name.sh
+reg_network.sh
+user_define.sh
 #osprovision.sh
 )
 
 for ifile in ${filelist[@]}
 do
-  if [ ! -e ./functions/${ifile} ] ; then
-  echo "${ifile} 文件不存在!!!"
-  exit 
-fi
+    if [ ! -e ./functions/${ifile} ] ; then
+        echo "${ifile} 文件不存在!!!"
+        exit 
+    fi
 done
 
 chmod +x ./functions/*.sh
+####-----------end int 0-------------####
 
-if [ -e env.text ] ; then
-rm env.text
-fi
-
+#########################################
+#############-----int 1-----#############
+#########################################
 ### 寻找安装包文件的位置,判断其完整性
-./functions/findpackage.sh
+./functions/findpackage.sh  findpackage.log
 if [ $? -ne 0 ]; then
-exit
+    exit
 fi
+####-----------end int 1-------------####
 
-### 设置集群名字
-./functions/cname.sh $cname
+#########################################
+#############-----int 2-----#############
+#########################################
+### 设置环境变量，生成 env.text 文件
+### 确定集群名字
+./functions/reg_name.sh
 
-### 设置集群内网IP
-./functions/cnetwork.sh
+### 确定集群网络参数
+./functions/reg_network.sh
+####-----------end int 2-------------####
 
+
+#########################################
+#############-----int 3-----#############
+#########################################
+### 生成 Install.sh
+### 产生本地 repo >> Install.sh
+echo "" > Install.sh
+echo "./functions/make_repo.sh" >> Install.sh
+### 设置管理节点时区、防火墙等 >> Install.sh
+echo "./functions/set_headnode.sh" >> Install.sh
+### 设置网络 >> Install.sh
+echo "./functions/create_network.sh" >> Install.sh
+
+### 目前到了 stage01.sh 第54行，但是前面的功能未经充分测试
+#### 未完待续。。。。 
+
+### 添加自定义设置
+echo "./functions/user_define.sh  user_define.log" >> Install.sh
+####-----------end int 3-------------####
 
 
 
