@@ -12,7 +12,7 @@ yum -y -q install openmpi4-gnu12-ohpc mpich-ofi-gnu12-ohpc >>${0##*/}.log 2>&1
 ####
 yum -y -q install lmod-defaults-gnu12-openmpi4-ohpc >>${0##*/}.log 2>&1
 yum -y -q install glibc-static libstdc++-static >>${0##*/}.log 2>&1 ## libstdc++-devel  ## 
-yum -y -q install dos2unix >>${0##*/}.log 2>&1
+
 ###
 
 

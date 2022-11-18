@@ -21,3 +21,10 @@ mount /dev/sdb1 /mnt/usb
 7. 成功产生 Install.sh之后 ./Install.sh 进行安装
 
 8. functions/add_computenode.sh 添加计算节点（待改进）
+
+### To do list
+1. if 之后的单括号 与 双括号 的区别，双括号可以避免变量里边的特殊字符导致判断失败
+   不知是否需要修改！！！
+
+2. 
+

@@ -83,7 +83,7 @@ fi
 echo "-->执行 $0 : 创建计算节点仓库及配置文件 - - - - - - - -"
 
 ### add http repo in head node for compute nodes
-yum -y -q install httpd httpd-filesystem httpd-tools
+yum -y -q install httpd httpd-filesystem httpd-tools dos2unix >>${0##*/}.log 2>&1
 cat >/etc/httpd/conf.d/repo.conf <<'EOF'
 AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
 <Directory "/opt/repo">

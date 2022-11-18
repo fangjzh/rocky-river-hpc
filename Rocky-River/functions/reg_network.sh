@@ -34,7 +34,7 @@ maskdigits() {
 
 ### 选择内网网口
 echo "请选择内网网卡，选择输入以下网络端口名："
-net_name=($(ls /sys/class/net | grep -E 'ens|eth'))
+net_name=($(ls /sys/class/net | grep -E 'ens|eth|eno|enp'))
 echo ${net_name[*]}
 
 while true; do
