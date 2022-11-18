@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 if [ -z ${sms_name} ]; then
     source ./env.text
 fi
@@ -27,7 +27,7 @@ if [ -z ${res_tmp[0]} ]; then
     tmp_folder_p=${res_tmp[0]%.*}
     tmp_folder=${tmp_folder_p##*/}
     cd ${tmp_folder}
-    ./install.sh --components intel.oneapi.lin.dpcpp-cpp-compiler:intel.oneapi.lin.mkl.devel  --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
+    ./install.sh --components intel.oneapi.lin.dpcpp-cpp-compiler:intel.oneapi.lin.mkl.devel  --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept  >>${0##*/}.log 2>&1
     sleep 6
     cd /root
 fi
@@ -41,7 +41,7 @@ if [ -z ${res_tmp[0]} ]; then
     tmp_folder_p=${res_tmp[0]%.*}
     tmp_folder=${tmp_folder_p##*/}
     cd ${tmp_folder}
-    ./install.sh --components intel.oneapi.lin.ifort-compiler:intel.oneapi.lin.dpcpp-cpp-compiler-pro:intel.oneapi.lin.mpi.devel --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept
+    ./install.sh --components intel.oneapi.lin.ifort-compiler:intel.oneapi.lin.dpcpp-cpp-compiler-pro:intel.oneapi.lin.mpi.devel --install-dir=/opt/ohpc/pub/apps/intel --silent --eula accept  >>${0##*/}.log 2>&1
     sleep 6
     cd /root
 fi

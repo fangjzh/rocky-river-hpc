@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 err_v=1
 

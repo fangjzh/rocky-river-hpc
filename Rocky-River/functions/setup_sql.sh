@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 if [ -z ${sms_name} ]; then
     source ./env.text
 fi
@@ -6,7 +6,7 @@ fi
 echo "-->执行 $0 : 安装设置数据库软件 - - - - - - - -"
 echo "$0 执行开始！" >${0##*/}.log
 ### install sql
-yum -y -q install mariadb*
+yum -y -q install mariadb* >>${0##*/}.log 2>&1
 # 假设机器的/home分区是个SSD的大分区，datadir设置为/home/mysql
 # mkdir -p /home/mysql
 # chown mysql:mysql /home/mysql

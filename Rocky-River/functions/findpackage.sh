@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 iso_name=Rocky-8.6-x86_64-dvd1.iso
 

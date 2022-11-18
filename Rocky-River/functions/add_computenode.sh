@@ -1,10 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 if [ -z ${sms_name} ]; then
     source ./env.text
 fi
 
 if [ -e new_install.nodes ]; then
     echo "先前安装节点为完成，请先执行after_add_computenode.sh"
+    exit
+fi
+
+service_stat=($(systemctl status dhcpd | grep Active | grep running))
+if [ -z ${service_stat[0]} ]; then
+    echo "service dhcpd 未启动"
     exit
 fi
 
@@ -132,21 +138,37 @@ if [ ! -z ${image_list[0]} ]; then
     image_choose=${image_list[0]}
 fi
 
+new_node_start=$((${node_max} + 1))
+new_node_start=$(printf '%03d\n' ${new_node_start})
+
 for i_mac in ${macs[@]}; do
     max_ip=$(nextip $max_ip)
     ((node_max++))
     node_max=$(printf '%03d\n' ${node_max})
     mkdef -t node ${compute_prefix}${node_max} groups=compute,all ip=${max_ip} mac=${i_mac} netboot=xnba arch=x86_64
-    nodeset ${compute_prefix}${node_max} osimage=${image_choose}
+    #    nodeset ${compute_prefix}${node_max} osimage=${image_choose}
     chdef ${compute_prefix}${node_max} -p postbootscripts=mypostboot
     echo "NodeName=${compute_prefix}${node_max} Sockets=${Sockets} CoresPerSocket=${CoresPerSocket} \
     ThreadsPerCore=${ThreadsPerCore} State=UNKNOWN" >>/etc/slurm/slurm.conf
 done
 
+new_node_end=$(printf '%03d\n' ${node_max})
+
 sed -i '/^PartitionName=normal/d' /etc/slurm/slurm.conf
 nodes_name=($(nodels | grep ${compute_prefix} | sed 's/'"${compute_prefix}"'//g' | sort -n))
 Nodes=${compute_prefix}[${nodes_name[0]}-${nodes_name[-1]}]
 echo "PartitionName=normal Nodes=${Nodes} Default=YES MaxTime=168:00:00 State=UP Oversubscribe=YES" >>/etc/slurm/slurm.conf
+
+if [ ${new_node_start} -lt ${new_node_end} ]; then
+    new_node_name_xcat=$(echo "${compute_prefix}${new_node_start}-${compute_prefix}${new_node_end}")
+    new_node_name_slurm=$(echo "${compute_prefix}[${new_node_start}-${new_node_end}]")
+elif [ ${new_node_start} -eq ${new_node_end} ]; then
+    new_node_name_xcat=$(echo "${compute_prefix}${new_node_start}")
+    new_node_name_slurm=${new_node_name_xcat}
+fi
+
+### update clustershell conf
+perl -pi -e "s/compute:/compute: ${new_node_name_slurm}/" /etc/clustershell/groups.d/local.cfg
 
 # Complete network service configurations
 makehosts
@@ -158,6 +180,6 @@ makedns -n
 
 ## 产生一个列表，记录新装的节点名
 
-echo $Nodes > new_install.nodes
+echo "$new_node_name_xcat $new_node_name_slurm" >new_install.nodes
 
 echo "当计算节点安装完成后（首次启动还需运行mypostboot），再执行 after_add_computenode.sh"

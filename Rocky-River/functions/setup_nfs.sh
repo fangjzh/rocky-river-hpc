@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 if [ -z ${sms_name} ]; then
     source ./env.text
 fi

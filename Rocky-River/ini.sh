@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ################################
 #####       功能规划       #####
@@ -74,7 +74,7 @@ fi
 #########################################
 ### 生成 Install.sh
 
-echo "#!/bin/bash" >Install.sh
+echo "#!/bin/sh" >Install.sh
 cat <<EOF >>Install.sh
 if [ ! -e ./env.text ]; then
     echo "错误：安装环境变量文件 env.text 未产生！"

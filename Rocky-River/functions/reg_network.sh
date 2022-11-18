@@ -1,5 +1,5 @@
-#!/bin/bash
-# blog: http://lizhenliang.blog.51cto.com
+#!/bin/sh
+## blog: http://lizhenliang.blog.51cto.com
 
 ## IP检查
 function check_ip() {
