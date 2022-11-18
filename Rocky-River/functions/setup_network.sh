@@ -1,4 +1,9 @@
-source ./env.text
+#!/bin/bash
+if [ -z ${sms_name} ]; then
+    source ./env.text
+fi
+
+echo "-->执行 $0 : 设置网络 - - - - - - - -"
 
 ### 修复网卡名称 ###
 if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} ]; then
@@ -22,3 +27,6 @@ if [ $? != 0 ]; then
     echo "network error!"
     exit
 fi
+
+echo "-->执行 $0 : 设置网络完毕 + = + = + = + = + ="
+echo "$0 执行完成！" >${0##*/}.log

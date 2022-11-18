@@ -6,9 +6,9 @@
 rocky_re=8.6
 iso_name=Rocky-${rocky_re}-x86_64-dvd1.iso
 
-res_tmp=(`find /root /mnt /media /run/media -name ${iso_name}`)
+res_tmp=($(find /root /mnt /media /run/media -name ${iso_name}))
 if [ -z ${res_tmp[0]} ]; then
-  wget https://mirrors.sjtug.sjtu.edu.cn/rocky/${rocky_re}/isos/x86_64/${iso_name}
+    wget https://mirrors.sjtug.sjtu.edu.cn/rocky/${rocky_re}/isos/x86_64/${iso_name}
 fi
 iso_path=${res_tmp[0]}
 
@@ -18,7 +18,7 @@ iso_path=${res_tmp[0]}
 ## 可以用同步法下载至本地
 
 ## 设置缓存保留
-cat <<EOF >> /etc/yum.conf 
+cat <<EOF >>/etc/yum.conf
 keepcache=1
 cachedir=/var/cache/yum/\$basearch/\$releasever
 EOF
@@ -26,7 +26,7 @@ EOF
 ### 修改源 base os 、appstream 以及powertools 为 kickstart，也就是rocky Linux当时release的状态
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
 
-cat <<EOF > /etc/yum.repos.d/Rocky-kickstart.repo
+cat <<EOF >/etc/yum.repos.d/Rocky-kickstart.repo
 # Rocky-local.repo
 #
 # You can use this repo to install items directly off the installation local.
@@ -52,21 +52,18 @@ enabled=1
 
 EOF
 
-
 yum makecache
 
 yum -y install yum-utils createrepo
 
-
-### 
+###
 mkdir -p /opt/repo/rocky
-reposync --repoid=kickstart-powertools  --exclude 'java-*debug*' --exclude 'dotnet*' -p /opt/repo/rocky/
+reposync --repoid=kickstart-powertools --exclude 'java-*debug*' --exclude 'dotnet*' -p /opt/repo/rocky/
 createrepo /opt/repo/rocky/kickstart-powertools
 
 cd /opt/repo/rocky
 tar -cf /root/kickstart-powertools.tar kickstart-powertools
 cd ~
-
 
 ### 添加epel和fish源
 wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-archive-8.repo
@@ -80,11 +77,11 @@ wget -O /etc/yum.repos.d/fish.repo https://download.opensuse.org/repositories/sh
 ohpc_re=2.6
 ohpc_pkg_name=OpenHPC-${ohpc_re}.EL_8.x86_64.tar
 ##
-res_tmp=(`find /root /mnt /media /run/media -name ${ohpc_pkg_name}`)
+res_tmp=($(find /root /mnt /media /run/media -name ${ohpc_pkg_name}))
 if [ -z ${res_tmp[0]} ]; then
-  echo "${ohpc_pkg_name} not find !!!"
-  wget http://repos.openhpc.community/dist/${ohpc_re}/${ohpc_pkg_name}
-  res_tmp=(`find /root /mnt /media /run/media -name ${ohpc_pkg_name}`)
+    echo "${ohpc_pkg_name} not find !!!"
+    wget http://repos.openhpc.community/dist/${ohpc_re}/${ohpc_pkg_name}
+    res_tmp=($(find /root /mnt /media /run/media -name ${ohpc_pkg_name}))
 fi
 ohpc_path=${res_tmp[0]}
 
@@ -95,26 +92,26 @@ xcat_re_p=${xcat_re_pp}.16
 xcat_re=${xcat_re_p}.4
 xcatc_pkg_name=xcat-core-${xcat_re}-linux.tar.bz2
 
-res_tmp=(`find /root /mnt /media /run/media -name ${xcatc_pkg_name}`)
+res_tmp=($(find /root /mnt /media /run/media -name ${xcatc_pkg_name}))
 if [ -z ${res_tmp[0]} ]; then
-  echo "${xcatc_pkg_name} not find !!!"
-  wget https://xcat.org/files/xcat/xcat-core/${xcat_re_p}.x_Linux/xcat-core/${xcatc_pkg_name}
-  res_tmp=(`find /root /mnt /media /run/media -name ${xcatc_pkg_name}`)
+    echo "${xcatc_pkg_name} not find !!!"
+    wget https://xcat.org/files/xcat/xcat-core/${xcat_re_p}.x_Linux/xcat-core/${xcatc_pkg_name}
+    res_tmp=($(find /root /mnt /media /run/media -name ${xcatc_pkg_name}))
 fi
 xcat_pathc=${res_tmp[0]}
 
 xcatd_pkg_name=xcat-dep-${xcat_re}-linux.tar.bz2
-res_tmp=(`find /root /mnt /media /run/media -name ${xcatd_pkg_name}`)
+res_tmp=($(find /root /mnt /media /run/media -name ${xcatd_pkg_name}))
 if [ -z ${res_tmp[0]} ]; then
-  echo "${xcatd_pkg_name} not find !!!"
-  wget https://xcat.org/files/xcat/xcat-dep/${xcat_re_pp}.x_Linux/${xcatd_pkg_name}
-  res_tmp=(`find /root /mnt /media /run/media -name ${xcatd_pkg_name}`)
+    echo "${xcatd_pkg_name} not find !!!"
+    wget https://xcat.org/files/xcat/xcat-dep/${xcat_re_pp}.x_Linux/${xcatd_pkg_name}
+    res_tmp=($(find /root /mnt /media /run/media -name ${xcatd_pkg_name}))
 fi
 xcat_pathd=${res_tmp[0]}
 ##
 
 mkdir -p /opt/repo/openhpc
-tar -xf ${ohpc_path}  -C /opt/repo/openhpc
+tar -xf ${ohpc_path} -C /opt/repo/openhpc
 rm -f /opt/repo/openhpc/EL_8/x86_64/trilinos-*
 rm -f /opt/repo/openhpc/EL_8/updates/x86_64/trilinos-*
 createrepo /opt/repo/openhpc/EL_8/updates/
@@ -129,7 +126,7 @@ cd ~
 mkdir -p /opt/repo/xcat
 tar -xjf ${xcat_pathc} -C /opt/repo/xcat
 tar -xjf ${xcat_pathd} -C /opt/repo/xcat
-cd  /opt/repo/xcat/xcat-dep
+cd /opt/repo/xcat/xcat-dep
 rm -rf rh7 rh8/ppc64le/ rh8/ppc64le/ sles12/ sles15/
 cd ~
 /opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh
@@ -142,15 +139,17 @@ cd ~
 ### 现在我们已经制作了如下文件，位于/root目录下
 ## kickstart-powertools.tar openhpc.tar  xcat.tar
 
-## 产生依赖文件缓存
+## 产生依赖文件缓存xcat 依赖 fish
 yum -y install --downloadonly fish
+## 后续要装的文件
+yum -y install --downloadonly clustershell glibc-static libstdc++-static
 
 ## yum repolist
 ## yum list --repo xxxxxx
-yum list --repo xcat-dep | grep xcat-dep | awk '{printf "%s ",$1}' > xcat-dep.list
-yum list --repo xcat-core | grep xcat-core | awk '{printf "%s ",$1}' > xcat-core.list
-yum list --repo OpenHPC-local | grep OpenHPC-local |grep -v aarch64 |grep -v '.src '| awk '{printf "%s ",$1}' > ohpc.list
-yum list --repo OpenHPC-local-updates | grep OpenHPC-local-updates |grep -v aarch64 |grep -v '.src '| awk '{printf "%s ",$1}' > ohpc-updates.list
+yum list --repo xcat-dep | grep xcat-dep | awk '{printf "%s ",$1}' >xcat-dep.list
+yum list --repo xcat-core | grep xcat-core | awk '{printf "%s ",$1}' >xcat-core.list
+yum list --repo OpenHPC-local | grep OpenHPC-local | grep -v aarch64 | grep -v '.src ' | awk '{printf "%s ",$1}' >ohpc.list
+yum list --repo OpenHPC-local-updates | grep OpenHPC-local-updates | grep -v aarch64 | grep -v '.src ' | awk '{printf "%s ",$1}' >ohpc-updates.list
 
 cat xcat-core.list | xargs yum -y install --downloadonly --skip-broken
 cat xcat-dep.list | xargs yum -y install --downloadonly --skip-broken
@@ -160,10 +159,19 @@ cat ohpc-updates.list | xargs yum -y install --downloadonly --skip-broken
 
 ## 打包缓存为repo
 mkdir -p dep-packages
-dir=`find /var/cache/yum/ -name 'epel*' -type d`
+dir=$(find /var/cache/yum/ -name 'epel*' -type d)
 cp -r ${dir}/packages/ dep-packages/
 
-dir=`find /var/cache/yum/ -name 'shells*' -type d`
+dir=$(find /var/cache/yum/ -name 'kickstart-baseos*' -type d)
+cp -r ${dir}/packages/ dep-packages/
+
+dir=$(find /var/cache/yum/ -name 'kickstart-powertools*' -type d)
+cp -r ${dir}/packages/ dep-packages/
+
+dir=$(find /var/cache/yum/ -name 'kickstart-appstream*' -type d)
+cp -r ${dir}/packages/ dep-packages/
+
+dir=$(find /var/cache/yum/ -name 'shells_fish*' -type d)
 cp -r ${dir}/packages/ dep-packages/
 createrepo dep-packages
 tar -cf dep-packages.tar dep-packages/
@@ -171,11 +179,11 @@ tar -cf dep-packages.tar dep-packages/
 ### 现在我们制作了如下文件
 ## kickstart-powertools.tar openhpc.tar  xcat.tar + dep-packages.tar 在root目录下
 ## 将其拷贝的U盘
-## mkdir -p /root/mnt/OHPC/build_repos; cp kickstart-powertools.tar openhpc.tar  xcat.tar dep-packages.tar /root/mnt/OHPC/build_repos 
-## 
+## mkdir -p /root/mnt/OHPC/build_repos; cp kickstart-powertools.tar openhpc.tar  xcat.tar dep-packages.tar /root/mnt/OHPC/build_repos
+##
 
 ## 恢复repo
-perl -pi -e "s/enabled=0/enabled=1/" /etc/yum.repos.d/Rocky-{AppStream,PowerTools,BaseOS,Extras}.repo  
+perl -pi -e "s/enabled=0/enabled=1/" /etc/yum.repos.d/Rocky-{AppStream,PowerTools,BaseOS,Extras}.repo
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-kickstart.repo
 
 ### Intel OneAPI

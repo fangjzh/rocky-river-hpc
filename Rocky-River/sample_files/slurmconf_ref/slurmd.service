@@ -1,0 +1,20 @@
+[Unit]
+Description=Slurm node daemon
+After=munge.service network.target remote-fs.target slurmctld.service
+Wants=network-online.target named.service
+#ConditionPathExists=/etc/slurm/slurm.conf
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/slurmd
+ExecStart=/usr/sbin/slurmd -D $SLURMD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+LimitNOFILE=131072
+LimitMEMLOCK=infinity
+LimitSTACK=infinity
+Delegate=yes
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target

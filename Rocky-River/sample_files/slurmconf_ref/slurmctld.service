@@ -1,0 +1,16 @@
+[Unit]
+Description=Slurm controller daemon
+After=network.target munge.service slurmdbd.service named.service
+Wants=network-online.target named.service
+ConditionPathExists=/etc/slurm/slurm.conf
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/slurmctld
+ExecStart=/usr/sbin/slurmctld -D $SLURMCTLD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+LimitNOFILE=65536
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target

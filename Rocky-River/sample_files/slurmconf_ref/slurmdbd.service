@@ -1,0 +1,15 @@
+[Unit]
+Description=Slurm DBD accounting daemon
+After=network.target munge.service mariadb.service
+ConditionPathExists=/etc/slurm/slurmdbd.conf
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/slurmdbd
+ExecStart=/usr/sbin/slurmdbd -D $SLURMDBD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+LimitNOFILE=65536
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target

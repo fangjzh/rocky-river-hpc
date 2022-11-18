@@ -1,5 +1,9 @@
-#!/bin/sh
-source ./env.text
+#!/bin/bash
+if [ -z ${sms_name} ]; then
+    source ./env.text
+fi
+
+echo "-->执行 $0 : 头节点时区、hostname、防火墙设置 - - - - - - - -"
 
 ###设置时区###
 # timedatectl list-timezones
@@ -28,3 +32,14 @@ systemctl stop firewalld
 setenforce 0
 perl -pi -e "s/ELINUX=enforcing/SELINUX=disabled/" /etc/sysconfig/selinux
 ### need reboot ##
+
+###disable ipv6####
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >>/etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
+
+# Update memlock settings on master
+perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limits.conf
+perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
+
+echo "-->执行 $0 : 头节点时区、hostname、防火墙设置完毕 + = + = + = + = + ="
+echo "$0 执行完成！" >${0##*/}.log

@@ -43,7 +43,7 @@ chmod +x ./functions/*.sh
 #############-----int 1-----#############
 #########################################
 ### 寻找安装包文件的位置,判断其完整性
-./functions/findpackage.sh findpackage.log
+./functions/findpackage.sh
 if [ $? -ne 0 ]; then
     exit
 fi
@@ -64,17 +64,49 @@ fi
 #############-----int 3-----#############
 #########################################
 ### 生成 Install.sh
-### 产生本地 repo >> Install.sh
-echo "" >Install.sh
+
+echo "#!/bin/bash" >Install.sh
+cat <<EOF >>Install.sh
+if [ ! -e ./env.text ]; then
+    echo "错误：安装环境变量文件 env.text 未产生！"
+    exit 10
+else
+    source ./env.text
+fi
+EOF
+### 产生本地 repo >> Install.sh（这里依赖httpd，已经添加）
 echo "./functions/make_repo.sh" >>Install.sh
 ### 设置管理节点时区、防火墙等 >> Install.sh
 echo "./functions/set_headnode.sh" >>Install.sh
 ### 设置网络 >> Install.sh
-echo "./functions/create_network.sh" >>Install.sh
+echo "./functions/setup_network.sh" >>Install.sh
+### 安装ntp-server >> Install.sh
+echo "./functions/setup_ntp.sh" >>Install.sh
+
+### 安装 mysql >> Install.sh
+echo "./functions/setup_sql.sh" >>Install.sh
+## 安装 ohpc、xcat >> Install.sh
+echo "./functions/setup_ohpc_xcat.sh" >>Install.sh
+## 安装 slurm >> Install.sh
+echo "./functions/setup_slurm.sh" >>Install.sh
+
+## 安装 nis >> Install.sh
+echo "./functions/setup_nis.sh" >>Install.sh
+## 安装 nfs >> Install.sh (这里需要有ohpc产生的目录/opt/ohpc/pub)
+echo "./functions/setup_nfs.sh" >>Install.sh
+## 安装 cluster shell >> Install.sh
+echo "./functions/setup_clustershell.sh" >>Install.sh
+
+## 安装编译工具 >> Install.sh
+echo "./functions/setup_devtools.sh" >>Install.sh
+
 
 ### 目前到了 stage01.sh 第54行，但是前面的功能未经充分测试
 #### 未完待续。。。。
 
 ### 添加自定义设置
-echo "./functions/user_define.sh  user_define.log" >>Install.sh
+echo "./functions/user_define.sh" >>Install.sh
+chmod +x Install.sh
 ####-----------end int 3-------------####
+
+echo "接下来请执行 Install.sh 脚本"

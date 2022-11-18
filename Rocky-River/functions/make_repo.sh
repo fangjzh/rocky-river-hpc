@@ -1,9 +1,9 @@
 #!/bin/sh
-source ./env.text
-if [ $? != 0 ]; then
-    echo "错误：安装环境变量文件 env.text 未产生！"
-    exit 10
+if [ -z ${sms_name} ]; then
+    source ./env.text
 fi
+
+echo "-->执行 $0 : 创建本地软件仓库 - - - - - - - -"
 
 ###make local repo####
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
@@ -17,6 +17,7 @@ mkdir -p /opt/repo/rocky
 mkdir -p /media/Rocky
 mount -o loop ${iso_path}/${iso_name} /media/Rocky
 cp -r /media/Rocky/* /opt/repo/rocky
+umount /media/Rocky
 
 ### for virmachine mount cdrom device
 # mkdir /media/Rocky
@@ -79,6 +80,21 @@ else
     echo "make repo succeed !"
 fi
 
+echo "-->执行 $0 : 创建计算节点仓库及配置文件 - - - - - - - -"
+
+### add http repo in head node for compute nodes
+yum -y -q install httpd httpd-filesystem httpd-tools
+cat >/etc/httpd/conf.d/repo.conf <<'EOF'
+AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
+<Directory "/opt/repo">
+    Options Indexes FollowSymLinks Includes MultiViews
+    AllowOverride None
+    Require all granted
+</Directory>
+EOF
+systemctl restart httpd
+####
+
 #######################
 ### create repo file for compute node ###
 ##package_dir=/root/package
@@ -90,3 +106,6 @@ cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/'
 echo "     " >>/opt/repo/compute_node.repo
 cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
 echo "     " >>/opt/repo/compute_node.repo
+
+echo "-->执行 $0 : 创建本地软件仓库完成 + = + = + = + = + ="
+echo "$0 执行完成！" >${0##*/}.log

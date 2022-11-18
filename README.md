@@ -13,7 +13,7 @@ https://github.com/fangjzh/rocky-river-hpc
 
 
 ### 简要使用步骤
-1. 准备一个32G+的优盘，下载ventoy,将ventoy写入优盘，注意设置一个额外的ext分区存放fuse-exfat程序，否则安装完系统无法挂载优盘
+1. 准备一个32G+的优盘，下载ventoy,将ventoy写入优盘，注意设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载优盘
 ventoy 项目地址：
 https://www.ventoy.net/en/index.html
 2. 下载项目所需包，给一个百度盘的地址
