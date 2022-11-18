@@ -74,9 +74,6 @@ authconfig --update --enablenis
 ###
 systemctl restart rpcbind ypbind
 
-### install cluster shell
-yum -y -q install clustershell
-
 ### 这一段在计算节点上运行即可监控计算节点，注意计算节点要时间同步
 telegraf=1
 if [ ! $telegraf ]; then
