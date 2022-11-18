@@ -23,10 +23,19 @@ fi
 #########################################
 ### 检查脚本文件的权限与完整性
 filelist=(
-    reg_name.sh
     reg_network.sh
+    set_headnode.sh
+    setup_clustershell.sh
+    setup_devtools.sh
+    setup_monitor.sh
+    setup_network.sh
+    setup_nfs.sh
+    setup_nis.sh
+    setup_ntp.sh
+    setup_ohpc_xcat.sh
+    setup_slurm.sh
+    setup_sql.sh
     user_define.sh
-    #osprovision.sh
 )
 
 for ifile in ${filelist[@]}; do
