@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 安装设置数据库软件 - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 ### install sql
 yum -y -q install mariadb*
 # 假设机器的/home分区是个SSD的大分区，datadir设置为/home/mysql
@@ -20,4 +20,4 @@ mysql -e "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('78g*tw23.ysq');"
 
 echo "-->执行 $0 : 安装设置数据库软件完毕 + = + = + = + = + ="
 
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

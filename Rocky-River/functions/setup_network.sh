@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 设置网络 - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 ### 修复网卡名称 ###
 if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} ]; then
     echo "/etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} is not exist!!!"
@@ -29,4 +29,4 @@ if [ $? != 0 ]; then
 fi
 
 echo "-->执行 $0 : 设置网络完毕 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

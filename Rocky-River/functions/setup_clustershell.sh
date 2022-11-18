@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 安装设置cluster shell - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 #### Install ClusterShell
 yum -y -q install clustershell
 # Setup node definitions
@@ -17,4 +17,4 @@ cd ~
 ######
 
 echo "-->执行 $0 : 安装设置cluster shell 完毕 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 安装设置NTP服务 - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 ######set ntp server########
 yum -y -q install chrony
 systemctl enable chronyd.service
@@ -17,4 +17,4 @@ systemctl restart chronyd
 ####
 
 echo "-->执行 $0 : 安装设置NTP服务完毕 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 头节点时区、hostname、防火墙设置 - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 ###设置时区###
 # timedatectl list-timezones
 timedatectl set-timezone Asia/Shanghai
@@ -42,4 +42,4 @@ perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limi
 perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
 
 echo "-->执行 $0 : 头节点时区、hostname、防火墙设置完毕 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

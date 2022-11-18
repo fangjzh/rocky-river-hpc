@@ -4,9 +4,9 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 安装设置slurm - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 #### install slurm ######
-yum -y -q install mailx munge ohpc-slurm-server
+yum -y -q install mailx munge ohpc-slurm-server >${0##*/}.log 2>&1
 systemctl enable munge
 
 # 添加slurmdb 数据库用户
@@ -67,7 +67,7 @@ systemctl start slurmdbd
 systemctl start slurmctld
 
 ############ 将头节点加入计算 ##############
-yum -y -q install ohpc-slurm-client
+yum -y -q install ohpc-slurm-client >>${0##*/}.log 2>&1
 #systemctl  enable slurmd
 echo SLURMD_OPTIONS="--conf-server ${sms_ip}" >/etc/sysconfig/slurmd
 echo "NodeName=${sms_name} Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN" >>/etc/slurm/slurm.conf
@@ -92,4 +92,4 @@ systemctl enable slurmctld
 
 echo "-->执行 $0 : 安装设置slurm 完毕 + = + = + = + = + ="
 
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log

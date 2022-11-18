@@ -4,7 +4,7 @@ if [ -z ${sms_name} ]; then
 fi
 
 echo "-->执行 $0 : 安装设置ohpc base 和 xcat - - - - - - - -"
-
+echo "$0 执行开始！" >${0##*/}.log
 ######install ohpc and xcat #########
 yum -y -q install ohpc-base xCAT.x86_64 >${0##*/}.log 2>&1
 
@@ -44,4 +44,4 @@ sed -i 's/domain_name=local/domain_name='${domain_name}'/' /install/postscripts/
 chmod +x /install/postscripts/mypostboot
 
 echo "-->执行 $0 : 安装设置ohpc base 和 xcat 完毕 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+echo "$0 执行完成！" >>${0##*/}.log
