@@ -1,11 +1,11 @@
 #!/bin/bash
 # blog: http://lizhenliang.blog.51cto.com
 
-## IP检查 
+## IP检查
 function check_ip() {
     local IP=$1
-    VALID_CHECK=$(echo $IP|awk -F. '$1<=255&&$2<=255&&$3<=255&&$4<=255{print "yes"}')
-    if echo $IP|grep -E "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$" >/dev/null; then
+    VALID_CHECK=$(echo $IP | awk -F. '$1<=255&&$2<=255&&$3<=255&&$4<=255{print "yes"}')
+    if echo $IP | grep -E "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$" >/dev/null; then
         if [ $VALID_CHECK == "yes" ]; then
             echo "IP $IP  available!"
             return 0
@@ -20,40 +20,38 @@ function check_ip() {
 }
 
 ## 计算子网掩码位数
-maskdigits () {
+maskdigits() {
     a=$(echo "$1" | awk -F "." '{print $1" "$2" "$3" "$4}')
-    for num in $a;
-    do
-        while [ $num != 0 ];do
-            echo -n $(($num%2)) >> /tmp/num;
-            num=$(($num/2));
+    for num in $a; do
+        while [ $num != 0 ]; do
+            echo -n $(($num % 2)) >>/tmp/num
+            num=$(($num / 2))
         done
     done
     echo $(grep -o "1" /tmp/num | wc -l)
     rm /tmp/num
 }
 
-
 ### 选择内网网口
-echo  "请选择内网网卡，选择输入以下网络端口名："
-net_name=(`ls /sys/class/net | grep -E 'ens|eth'`)
+echo "请选择内网网卡，选择输入以下网络端口名："
+net_name=($(ls /sys/class/net | grep -E 'ens|eth'))
 echo ${net_name[*]}
 
 while true; do
     read -p "网卡: " sms_eth_internal
-    if [ ! -d /sys/class/net/${sms_eth_internal} ] ; then
+    if [ ! -d /sys/class/net/${sms_eth_internal} ]; then
         echo "输入错误，请重新输入！"
-    elif [ -z ${sms_eth_internal} ] ; then
+    elif [ -z ${sms_eth_internal} ]; then
         continue
     else
         break
     fi
 done
 
-echo "## 内网网卡：" >> env.text
-echo "export sms_eth_internal=${sms_eth_internal}" >> env.text
-echo "## OS分发网卡：" >> env.text
-echo "export eth_provision=${sms_eth_internal}" >> env.text
+echo "## 内网网卡：" >>env.text
+echo "export sms_eth_internal=${sms_eth_internal}" >>env.text
+echo "## OS分发网卡：" >>env.text
+echo "export eth_provision=${sms_eth_internal}" >>env.text
 
 ### 选择内网IP
 while true; do
@@ -62,20 +60,19 @@ while true; do
     [ $? -eq 0 ] && break
 done
 
-echo "## 内网IP：" >> env.text
-echo "export sms_ip=${sms_ip}" >> env.text
+echo "## 内网IP：" >>env.text
+echo "export sms_ip=${sms_ip}" >>env.text
 
-echo "## 计算节点NTP时间服务器IP：" >> env.text
-echo "export ntp_server=${sms_ip}" >> env.text
-
+echo "## 计算节点NTP时间服务器IP：" >>env.text
+echo "export ntp_server=${sms_ip}" >>env.text
 
 ### this can be set as a real domain name, such as buildhpc.org###
 ## so the sms /etc/hosts is as #
 #10.0.0.2 cjhpc cjhpc.buildhpc
 #10.0.0.201 cnode01 cnode01.build.hpc
 ###
-echo "## 内网子网域名：" >> env.text
-echo "export domain_name=local" >> env.text
+echo "## 内网子网域名：" >>env.text
+echo "export domain_name=local" >>env.text
 
 ### 子网掩码设置
 while true; do
@@ -83,8 +80,8 @@ while true; do
     check_ip $internal_netmask
     [ $? -eq 0 ] && break
 done
-echo "## 内网子网掩码：" >> env.text
-echo "export internal_netmask=${internal_netmask}" >> env.text
+echo "## 内网子网掩码：" >>env.text
+echo "export internal_netmask=${internal_netmask}" >>env.text
 
 ### 内网子网掩码长度
 #while true; do
@@ -96,26 +93,25 @@ echo "export internal_netmask=${internal_netmask}" >> env.text
 #    fi
 #done
 
-internal_netmask_l=`maskdigits ${internal_netmask}`
+internal_netmask_l=$(maskdigits ${internal_netmask})
 
-echo "## 内网子网掩码长度：" >> env.text
-echo "export internal_netmask_l=${internal_netmask_l}" >> env.text
+echo "## 内网子网掩码长度：" >>env.text
+echo "export internal_netmask_l=${internal_netmask_l}" >>env.text
 
-echo "## 计算节点名字前缀：" >> env.text
-echo "export compute_prefix=cnode" >> env.text
-echo "## 计算节点IP网段：" >> env.text
-echo "export c_ip_pre=${sms_ip}" >> env.text
+echo "## 计算节点名字前缀：" >>env.text
+echo "export compute_prefix=cnode" >>env.text
+echo "## 计算节点IP网段：" >>env.text
+echo "export c_ip_pre=${sms_ip}" >>env.text
 
-echo "## 光网内网IP：" >> env.text
-echo "export sms_ipoib=10.0.1.1" >> env.text
-echo "## 光网内网掩码：" >> env.text
-echo "export ipoib_netmask=255.255.255.0" >> env.text
-echo "## 光网内网计算节点IP网段：" >> env.text
-echo "export c_ipoib_pre=10.0.1.1" >> env.text
-
+### 这里有待改进，后期脚本需要配置IB
+echo "## 光网内网IP：" >>env.text
+echo "export sms_ipoib=10.0.1.1" >>env.text
+echo "## 光网内网掩码：" >>env.text
+echo "export ipoib_netmask=255.255.255.0" >>env.text
+echo "## 光网内网计算节点IP网段：" >>env.text
+echo "export c_ipoib_pre=10.0.1.1" >>env.text
 
 echo "网络参数设置完毕！"
-
 
 #############example check IP#################
 #while true; do

@@ -8,15 +8,15 @@ fi
 ###make local repo####
 perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
 
-if [ ! -e ${iso_path}/${iso_name} ] ; then
-   echo "${iso_path}/${iso_name} is not exist!!!"
-   exit
+if [ ! -e ${iso_path}/${iso_name} ]; then
+    echo "${iso_path}/${iso_name} is not exist!!!"
+    exit
 fi
 
 mkdir -p /opt/repo/rocky
 mkdir -p /media/Rocky
-mount -o loop ${iso_path}/${iso_name}   /media/Rocky
-cp -r /media/Rocky/*  /opt/repo/rocky
+mount -o loop ${iso_path}/${iso_name} /media/Rocky
+cp -r /media/Rocky/* /opt/repo/rocky
 
 ### for virmachine mount cdrom device
 # mkdir /media/Rocky
@@ -31,7 +31,7 @@ tar --no-same-owner -xf ${package_dir}/xcat.tar -C /opt/repo
 # find /opt/repo/rocky/epel -type f -exec chmod 444 {} \;
 # chown -R root.root /opt/repo/rocky
 
-cat <<EOF > /etc/yum.repos.d/Rocky-local.repo
+cat <<EOF >/etc/yum.repos.d/Rocky-local.repo
 # Rocky-local.repo
 #
 # You can use this repo to install items directly off the installation local.
@@ -69,7 +69,6 @@ EOF
 /opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh
 /opt/repo/xcat/xcat-core/mklocalrepo.sh
 
-
 yum clean all
 yum makecache
 
@@ -80,15 +79,14 @@ else
     echo "make repo succeed !"
 fi
 
-
 #######################
 ### create repo file for compute node ###
 ##package_dir=/root/package
-cat /etc/yum.repos.d/Rocky-local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' > /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/OpenHPC.local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >> /opt/repo/compute_node.repo
-echo "     " >> /opt/repo/compute_node.repo
+cat /etc/yum.repos.d/Rocky-local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >/opt/repo/compute_node.repo
+echo "     " >>/opt/repo/compute_node.repo
+cat /etc/yum.repos.d/OpenHPC.local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
+echo "     " >>/opt/repo/compute_node.repo
+cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
+echo "     " >>/opt/repo/compute_node.repo
+cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
+echo "     " >>/opt/repo/compute_node.repo

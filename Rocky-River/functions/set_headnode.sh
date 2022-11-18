@@ -17,15 +17,14 @@ timedatectl set-timezone Asia/Shanghai
 # date -s "`date -d -1hour "+%F %T"`"
 
 #########change server name#########
-echo ${sms_name} > /etc/hostname
+echo ${sms_name} >/etc/hostname
 echo "${sms_ip}  ${sms_name}.${domain_name}  ${sms_name}" >>/etc/hosts
 nmcli g hostname ${sms_name}
-
 
 ########disable firewall#####
 systemctl disable firewalld
 systemctl stop firewalld
 ###disable selinux####
-setenforce 0   
+setenforce 0
 perl -pi -e "s/ELINUX=enforcing/SELINUX=disabled/" /etc/sysconfig/selinux
 ### need reboot ##

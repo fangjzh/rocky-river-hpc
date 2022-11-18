@@ -14,7 +14,7 @@
 
 ### 配置文件产生起始
 ### 删除先前产生的配置文件
-if [ -e env.text ] ; then
+if [ -e env.text ]; then
     rm env.text
 fi
 
@@ -23,17 +23,16 @@ fi
 #########################################
 ### 检查脚本文件的权限与完整性
 filelist=(
-reg_name.sh
-reg_network.sh
-user_define.sh
-#osprovision.sh
+    reg_name.sh
+    reg_network.sh
+    user_define.sh
+    #osprovision.sh
 )
 
-for ifile in ${filelist[@]}
-do
-    if [ ! -e ./functions/${ifile} ] ; then
+for ifile in ${filelist[@]}; do
+    if [ ! -e ./functions/${ifile} ]; then
         echo "${ifile} 文件不存在!!!"
-        exit 
+        exit
     fi
 done
 
@@ -44,7 +43,7 @@ chmod +x ./functions/*.sh
 #############-----int 1-----#############
 #########################################
 ### 寻找安装包文件的位置,判断其完整性
-./functions/findpackage.sh  findpackage.log
+./functions/findpackage.sh findpackage.log
 if [ $? -ne 0 ]; then
     exit
 fi
@@ -61,27 +60,21 @@ fi
 ./functions/reg_network.sh
 ####-----------end int 2-------------####
 
-
 #########################################
 #############-----int 3-----#############
 #########################################
 ### 生成 Install.sh
 ### 产生本地 repo >> Install.sh
-echo "" > Install.sh
-echo "./functions/make_repo.sh" >> Install.sh
+echo "" >Install.sh
+echo "./functions/make_repo.sh" >>Install.sh
 ### 设置管理节点时区、防火墙等 >> Install.sh
-echo "./functions/set_headnode.sh" >> Install.sh
+echo "./functions/set_headnode.sh" >>Install.sh
 ### 设置网络 >> Install.sh
-echo "./functions/create_network.sh" >> Install.sh
+echo "./functions/create_network.sh" >>Install.sh
 
 ### 目前到了 stage01.sh 第54行，但是前面的功能未经充分测试
-#### 未完待续。。。。 
+#### 未完待续。。。。
 
 ### 添加自定义设置
-echo "./functions/user_define.sh  user_define.log" >> Install.sh
+echo "./functions/user_define.sh  user_define.log" >>Install.sh
 ####-----------end int 3-------------####
-
-
-
-
-

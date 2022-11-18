@@ -1,7 +1,7 @@
 source ./env.text
 
 ### 修复网卡名称 ###
-if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} ] ; then
+if [ ! -e /etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} ]; then
     echo "/etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal} is not exist!!!"
     exit
 else
