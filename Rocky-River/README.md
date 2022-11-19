@@ -5,7 +5,8 @@
 ventoy 项目地址：
 https://www.ventoy.net/en/index.html
 2. 下载项目所需包，给一个百度盘的地址
-链接：xxxxxx
+链接：[百度云](https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w)
+提取码：点star 后邮件fangjzh.hn@qq.com 附上github ID，谢谢支持！
 
 3. 将所有文件存入优盘，然后从优盘启动并安装Rocky Linux
 
