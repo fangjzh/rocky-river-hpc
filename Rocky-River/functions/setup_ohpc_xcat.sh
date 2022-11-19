@@ -22,7 +22,11 @@ chdef -t site dhcpinterfaces="xcatmn|${sms_eth_internal}"
 chdef -t site domain=${domain_name}
 ###
 chdef -t site dhcpinterfaces="${sms_eth_internal}"
-
+makedhcp -n
+### set ntpservers
+chtab key=ntpservers site.value=${sms_ip}
+makenetworks
+### set root password 
 chtab key=system passwd.username=root passwd.password=$(openssl rand -base64 12)
 
 ##copycds -p /installl/centos8.4/x86_64 -n=centos8.4 ${iso_path}/Rocky-8.4-x86_64-dvd1.iso

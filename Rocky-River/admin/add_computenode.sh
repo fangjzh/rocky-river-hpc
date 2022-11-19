@@ -133,10 +133,6 @@ function nextip() {
 Sockets=1
 CoresPerSocket=1
 ThreadsPerCore=1
-image_list=($(lsdef -t osimage | grep install | grep compute))
-if [ ! -z ${image_list[0]} ]; then
-    image_choose=${image_list[0]}
-fi
 
 new_node_start=$((${node_max} + 1))
 new_node_start=$(printf '%03d\n' ${new_node_start})
@@ -146,7 +142,6 @@ for i_mac in ${macs[@]}; do
     ((node_max++))
     node_max=$(printf '%03d\n' ${node_max})
     mkdef -t node ${compute_prefix}${node_max} groups=compute,all ip=${max_ip} mac=${i_mac} netboot=xnba arch=x86_64
-    #    nodeset ${compute_prefix}${node_max} osimage=${image_choose}
     chdef ${compute_prefix}${node_max} -p postbootscripts=mypostboot
     echo "NodeName=${compute_prefix}${node_max} Sockets=${Sockets} CoresPerSocket=${CoresPerSocket} \
     ThreadsPerCore=${ThreadsPerCore} State=UNKNOWN" >>/etc/slurm/slurm.conf
@@ -167,19 +162,28 @@ elif [ ${new_node_start} -eq ${new_node_end} ]; then
     new_node_name_slurm=${new_node_name_xcat}
 fi
 
-### update clustershell conf
-perl -pi -e "s/compute:/compute: ${new_node_name_slurm}/" /etc/clustershell/groups.d/local.cfg
+### update clustershell conf ### 
+perl -ni -e 'if(/^compute/){print "compute: '${Nodes}'\n"}else{print}' /etc/clustershell/groups.d/local.cfg
 
 # Complete network service configurations
-makehosts
-makenetworks
-makedhcp -n
+makehosts $new_node_name_xcat ## 不加节点列表会添加xcat所定义全部hosts
+makedhcp  $new_node_name_xcat 
 makedns -n
+# makedns   $new_node_name_xcat ## 这个命令无法运行成功
+# makedhcp -n  ## 根据xcat信息重建dhcp，重启服务，会删除其他的dhcp定义
+# makedhcp -a  ## 根据xcat信息重建dhcp，不会重启服务
+# makedns -n
 
 ## 还需加入 IPMI 的内容，使新添加节点启动
 
-## 产生一个列表，记录新装的节点名
+## 设置新节点系统分发
+image_list=($(lsdef -t osimage | grep install | grep compute))
+if [ ! -z ${image_list[0]} ]; then
+    image_choose=${image_list[0]}
+fi
+nodeset ${compute_prefix}${node_max} osimage=${image_choose}
 
+## 产生一个列表，记录新装的节点名
 echo "$new_node_name_xcat $new_node_name_slurm" >new_install.nodes
 
 echo "当计算节点安装完成后（首次启动还需运行mypostboot），再执行 after_add_computenode.sh"

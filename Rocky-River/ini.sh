@@ -46,6 +46,10 @@ for ifile in ${filelist[@]}; do
 done
 
 chmod +x ./functions/*.sh
+
+### 检查服务是否安装和启动 underdevelop
+## dhcpd ?
+
 ####-----------end int 0-------------####
 
 #########################################
@@ -119,7 +123,8 @@ echo "./functions/setup_nis.sh" >>Install.sh
 echo "## 安装 nfs " >>Install.sh
 echo "./functions/setup_nfs.sh" >>Install.sh
 
-## 安装 cluster shell >> Install.sh
+## 安装 cluster shell >> Install.sh 
+## clustershell不是必要的，xcat已经包含了相关功能
 echo "## 安装 cluster shel" >>Install.sh
 echo "./functions/setup_clustershell.sh" >>Install.sh
 
@@ -131,6 +136,8 @@ echo "./functions/setup_devtools.sh" >>Install.sh
 echo "### 添加自定义设置" >>Install.sh
 echo "./functions/user_define.sh" >>Install.sh
 chmod +x Install.sh
+mkdir ins_logs
+mv *.sh.log ins_logs
 ####-----------end int 3-------------####
 
 echo "接下来请执行 Install.sh 脚本"
