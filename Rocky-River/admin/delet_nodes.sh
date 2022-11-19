@@ -2,6 +2,8 @@
 
 . /etc/profile.d/xcat.sh
 
+echo "只能删除单个节点"
+
 if [ -z $1 ]; then
     echo "未输入节点信息，退出！"
     exit

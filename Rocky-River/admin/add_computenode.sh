@@ -35,12 +35,14 @@ if [ ! -e node_add.list ]; then
     exit
 else
     c_mac=0
-    for line in $(cat node_add.list | awk '{print $1}' | sort -u); do
+    for line in $(cat node_add.list | awk '{print $1}'); do
         mac_i=$(echo $line | tr 'a-z' 'A-Z')
         check_mac_address $mac_i
         [ $? -eq 1 ] && break
         if [[ "${e_macs[@]}" =~ $mac_i ]]; then
             echo "与原有节点MAC相同，丢弃"
+        elif [[ "${macs[@]}" =~ $mac_i ]]; then
+            echo "重复MAC，丢弃"
         else
             macs[$c_mac]=$mac_i
             ((c_mac++))
