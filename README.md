@@ -1,3 +1,5 @@
+# 项目logo
+![logo](https://github.com/fangjzh/rocky-river-hpc/blob/master/Rocky-River/HPClogo/logo_r.png "Rocky River Logo")
 # 开发说明
 
 本项目旨在减轻初创科研团队HPC集群搭建和运维的困难。初创科研团队由于资金和硬件供应商技术缺乏等因素，需要额外的HPC运维技术支持。此项目可轻松地完成小规模HPC集群搭建，从学习的角度亦可促进HPC技术人才的培养。
