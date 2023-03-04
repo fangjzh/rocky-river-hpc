@@ -1,6 +1,14 @@
-## 本目录仅做脚本参考备份，代码已经迁移到 Rocky-River文件夹下
+# 本目录仅做脚本参考备份，代码已经迁移到 Rocky-River文件夹下
+该目录记录了部分原始开发测试过程，里边有
+- xcat支持Rocky Linux的功能代码，该代码已经合并到官方xcat项目
+- xcat无状态计算节点部署测试
+- warewulf无状态计算节点部署测试
+- openLDAP 计算节点用户同步功能测试
+- FreeIPA 计算节点用户同步功能测试 <br>
+其中openLDAP在Centos 7以后被FreeIPA（集成389目录服务器）替代，由于部署的复杂性，暂时使用NIS进行用户同步。<br>
+留下这个目录，供后期开发参考。
 
-### 简要使用步骤
+## 版本0.3.2的简要使用步骤
 1. 准备一个32G+的优盘，下载ventoy,将ventoy写入优盘，注意设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载优盘
 ventoy 项目地址：
 https://www.ventoy.net/en/index.html
