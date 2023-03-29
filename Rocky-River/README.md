@@ -44,7 +44,7 @@ sh ini.sh
 进行安装。
 
 9.  添加计算节点<br>
-运行functions/add_computenode.sh添加计算节点（待改进）
+运行admin/add_computenode.sh添加计算节点（待改进）
 
 ## 存在问题
 1. 同时多个节点安装时会出现某个节点root无密码登录出错，但是普通用户正常。<br>
