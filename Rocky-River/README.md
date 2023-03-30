@@ -6,7 +6,7 @@
 优盘格式可设置为exFAT，便于存放大于4G的文件。
 注意，写优盘时设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载exfat格式优盘。
 
-2. 下载项目所需包，给一个百度盘的地址<br>
+2. 下载项目所需包，给一个百度盘的地址（提取码 6yju）<br>
 链接: [https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w](https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w?pwd=6yju)
 
 3. 安装Rocky Linux<br>
