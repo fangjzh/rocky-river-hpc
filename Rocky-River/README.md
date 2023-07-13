@@ -11,6 +11,7 @@ with rocky linux 8.6 提取码 6yju<br>
 链接: [https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w](https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w?pwd=6yju)
 <br>with rocky linux 8.8 提取码 pkgx <br>
 链接: [https://pan.baidu.com/s/1wu747sJY0ZBK9YmICPpVYg](https://pan.baidu.com/s/1wu747sJY0ZBK9YmICPpVYg?pwd=pkgx)
+需单独下载rocky linux 8.8 iso镜像：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso)
 
 1. 安装Rocky Linux<br>
 将所有文件存入优盘，然后从优盘启动并Rocky Linux，安装Rocky Linux
