@@ -183,8 +183,8 @@ image_list=($(lsdef -t osimage | grep install | grep compute))
 if [ ! -z ${image_list[0]} ]; then
     image_choose=${image_list[0]}
 fi
-nodeset ${compute_prefix}${node_max} osimage=${image_choose}
-
+# nodeset ${compute_prefix}${node_max} osimage=${image_choose}
+nodeset $new_node_name_xcat osimage=${image_choose} 
 ## 产生一个列表，记录新装的节点名
 echo "$new_node_name_xcat $new_node_name_slurm" >new_install.nodes
 

@@ -3,7 +3,7 @@
 ## https://mirrors.sjtug.sjtu.edu.cn/rocky/8.6/isos/x86_64/
 ## 该脚本在相应的rocky os的root下执行，系统磁盘根目录100G,opt目录100G空间
 
-rocky_re=8.6
+rocky_re=8.8
 iso_name=Rocky-${rocky_re}-x86_64-dvd1.iso
 
 res_tmp=($(find /root /mnt /media /run/media -name ${iso_name}))
@@ -89,7 +89,7 @@ ohpc_path=${res_tmp[0]}
 ## 版本信息
 xcat_re_pp=2
 xcat_re_p=${xcat_re_pp}.16
-xcat_re=${xcat_re_p}.4
+xcat_re=${xcat_re_p}.5
 xcatc_pkg_name=xcat-core-${xcat_re}-linux.tar.bz2
 
 res_tmp=($(find /root /mnt /media /run/media -name ${xcatc_pkg_name}))

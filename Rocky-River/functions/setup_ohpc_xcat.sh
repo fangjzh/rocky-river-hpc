@@ -16,6 +16,9 @@ if [ $? != 0 ]; then
     exit
 fi
 
+## reg disinfo of rocky8.8
+perl -pi -e 'print "    \"1684366557.751811\" => \"rocky8.8\",      #x86_64\n" if $. == 17' /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
+
 # Register internal provisioning interface with xCAT for DHCP
 chdef -t site dhcpinterfaces="xcatmn|${sms_eth_internal}"
 ####
