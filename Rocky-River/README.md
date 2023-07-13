@@ -9,8 +9,8 @@
 1. 下载项目所需包，给一个百度盘的地址 <br>
 with rocky linux 8.6 提取码 6yju<br>
 链接: [https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w](https://pan.baidu.com/s/10qIU_qWvAVz3VITdYwD0_w?pwd=6yju)
-<br>with rocky linux 8.8 提取码 pkgx <br>
-链接: [https://pan.baidu.com/s/1wu747sJY0ZBK9YmICPpVYg](https://pan.baidu.com/s/1wu747sJY0ZBK9YmICPpVYg?pwd=pkgx)
+<br>with rocky linux 8.8 提取码 vwym <br>
+链接: [https://pan.baidu.com/s/1WtkyZBW6qthjaIrOv3eFdw](https://pan.baidu.com/s/1WtkyZBW6qthjaIrOv3eFdw?pwd=vwym)
 可从镜像下载rocky linux 8.8 iso镜像：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso)
 
 1. 安装Rocky Linux<br>
