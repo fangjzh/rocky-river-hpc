@@ -6,7 +6,7 @@
 优盘格式可设置为exFAT，便于存放大于4G的文件。
 注意，写优盘时设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载exfat格式优盘。
 
-1. 下载项目所需包，给一个百度盘的地址 <br>
+2. 下载项目所需包，给一个百度盘的地址 <br>
 <br>**最新版本：**<br>
 with rocky linux 8.8 提取码 dzr6<br>
 链接: [https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q](https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q?pwd=dzr6)
@@ -18,47 +18,47 @@ with rocky linux 8.8 提取码 dzr6<br>
 链接: [https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ](https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ?pwd=l8ya)
 
 
-1. 安装Rocky Linux<br>
+3. 安装Rocky Linux<br>
 将所有文件存入优盘，然后从优盘启动并Rocky Linux，安装Rocky Linux
 
-1. 安装fuse-exfat<br>
+4. 安装fuse-exfat<br>
 操作系统安装完成之后
 ```bash
 rpm -i fuse-exfat-1.3.0-3.el8.x86_64.rpm
 ```
-1. 挂载优盘<br>
+5. 挂载优盘<br>
 （可以挂载到/root，/mnt，/media，/run/media的子目录下），类似这样的
 ```bash
 mount /dev/sdb1 /mnt/usb  ###按实际情况修改
 ```
 
-1. 将Rocky-River文件夹拷贝到 /root 目录，然后<br>
+6. 将Rocky-River文件夹拷贝到 /root 目录，然后<br>
 ```bash
 cp -r /mnt/usb/xxx/Rocky-River /root/   ###按实际情况修改
 cd /root/Rocky-River
 ```
 在root目录进行以下操作
 
-1.  执行ini.sh进行初始化设置<br>
+7.  执行ini.sh进行初始化设置<br>
 ```bash
 sh ini.sh
 ```
 这里有些交互选项，按要求填写即可。
 
-1. 执行Install.sh进行安装<br>
+8. 执行Install.sh进行安装<br>
 成功产生 Install.sh之后，执行
 ```bash
 ./Install.sh 
 ```
 进行安装。
 
-1.  添加计算节点<br>
+9.  添加计算节点<br>
 - 先查到计算节点的MAC地址，然后写到node_add.list里边，可以写多个MAC(每行一个)
 - 运行admin/add_computenode.sh 注册计算节点
 - 计算节点从pxe启动，成功获得IP之后会自动安装操作系统和相关软件，首次启动会进行配置，需要等待几分钟时间才能正常登录
 - 计算节点完成安装之后，需要执行admin/after_add_computenode.sh 将munge key拷贝到计算节点
 
-1.  添加用户<br>
+10.  添加用户<br>
 脚本还没写，用 adduser 添加用户之后，执行 make -C /var/yp 同步用户
 
 ## 存在问题
