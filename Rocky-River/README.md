@@ -7,11 +7,13 @@
 注意，写优盘时设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载exfat格式优盘。
 
 1. 下载项目所需包，给一个百度盘的地址 <br>
+<br>**最新版本：**<br>
 with rocky linux 8.8 提取码 dzr6<br>
 链接: [https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q](https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q?pwd=dzr6)
 
-<br>可从镜像下载rocky linux 8.8 iso镜像：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso)<br>
+注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.8 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso)
 
+**往期版本：**
 <br>with rocky linux 8.6 提取码 l8ya <br>
 链接: [https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ](https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ?pwd=l8ya)
 

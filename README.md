@@ -16,7 +16,7 @@
 4. 由于本人工作原因，鸽的时间比较长，有问题可mail : fangjzh#foxmail.com 。防止抓取，'#'改成'@'！
 5. 项目的开发受到了HPC技术交流群（130653201）中各位大佬的支持和启发，如果觉得本项目对你有帮助，请慷慨地点击Star。
 
-项目地址:[https://github.com/fangjzh/rocky-river-hpc](https://github.com/fangjzh/rocky-river-hpc)
+项目地址:https://github.com/fangjzh/rocky-river-hpc
 
 ## 操作步骤与已有功能
 ### 步骤：
