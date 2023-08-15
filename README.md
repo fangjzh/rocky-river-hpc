@@ -21,6 +21,8 @@
 ## 操作步骤与已有功能
 ### 步骤：
 - 参考 Rocky-River 目录下的 [README.md](https://github.com/fangjzh/rocky-river-hpc/blob/master/Rocky-River/README.md)
+- 参考视频：https://www.bilibili.com/video/BV1Do4y1j7qg
+
 
 ### 功能：
 1. 一枚优盘离线快速安装所有功能
