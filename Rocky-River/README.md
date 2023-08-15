@@ -58,7 +58,13 @@ sh ini.sh
 - 计算节点从pxe启动，成功获得IP之后会自动安装操作系统和相关软件，首次启动会进行配置，需要等待几分钟时间才能正常登录
 - 计算节点完成安装之后，需要执行admin/after_add_computenode.sh 将munge key拷贝到计算节点
 
-10.  添加用户<br>
+10. 修改slurm配置文件
+修改 /etc/slurm/slurm.conf，主要是修改节点核数，根据实际情况修改，比如：<br>
+NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
+意思是这些节点都具有两块CPU，每块CPU有32个物理核心，每个物理核心允许单个线程。
+完成之后需要重启slurmctld服务。
+
+11.  添加用户<br>
 脚本还没写，用 adduser 添加用户之后，执行 make -C /var/yp 同步用户
 
 ## 存在问题
