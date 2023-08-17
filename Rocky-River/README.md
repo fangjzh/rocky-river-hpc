@@ -76,7 +76,7 @@ NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
 ## 常用操作
 1. slurm 服务相关<br>
 - slurm的服务端（管理节点）需要启动的服务 slurmdbd slurmctld
-- slurm客户端（承担计算任务的节点）需要启动的服务 slurmd munge
+- slurm客户端（承担计算任务的节点）需要启动的服务 slurmd munge <br>
 用sinfo查看机器状态如果出现联系不到服务器之类的提示，说明相关服务没启动，需要用
 `systemctl status xxx`
 命令去查看这些服务的状态，如果所有服务状态都正常，则可以在头节点用
