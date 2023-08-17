@@ -73,6 +73,18 @@ NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
 实际部署估计不会遇到这个问题。
 2. 设置计算节点内网时，要避免和企业/校园内网网段重叠，否则会产生不可预料的问题，比如无法上网，无法拨号，无法ssh连接等
 
+## 常用操作
+1. slurm 服务相关<br>
+- slurm的服务端（管理节点）需要启动的服务 slurmdbd slurmctld
+- slurm客户端（承担计算任务的节点）需要启动的服务 slurmd munge
+用sinfo查看机器状态如果出现联系不到服务器之类的提示，说明相关服务没启动，需要用
+`systemctl status xxx`
+命令去查看这些服务的状态，如果所有服务状态都正常，则可以在头节点用
+`scontrol update nodename=all state=idle`
+刷新节点状态
+
+
+
 ## To do list
 - [ ] 统一if后边的括号<br>
 if 之后的单括号 与 双括号 的区别，双括号可以避免变量里边的空变量导致判断失败,而双括号是bash才支持的。不过实际上在Centos/Rocky中/bin/sh都执向/bin/bash。所以本项目的 == 和 function 以及 [[]] 都被支持了。所以，应该将if [] 改成 if [[]]。
