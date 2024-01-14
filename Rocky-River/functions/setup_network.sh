@@ -20,8 +20,10 @@ nmcli conn mod ${sms_eth_internal} ipv4.address ${sms_ip}/${internal_netmask_l}
 nmcli conn mod ${sms_eth_internal} ipv4.gateway ${sms_ip}
 nmcli conn mod ${sms_eth_internal} ipv4.dns ${sms_ip}
 nmcli conn mod ${sms_eth_internal} ipv4.method manual
+nmcli connection modify ${sms_eth_internal} ipv4.route-metric 199 
 nmcli conn mod ${sms_eth_internal} autoconnect yes
 nmcli conn up ${sms_eth_internal}
+
 
 if [ $? != 0 ]; then
     echo "network error!"

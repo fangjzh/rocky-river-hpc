@@ -17,7 +17,13 @@ if [ $? != 0 ]; then
 fi
 
 ## reg disinfo of rocky8.8
+if ! grep -q 'rocky8.8'  /opt/xcat/lib/perl/xCAT/data/discinfo.pm ; then
 perl -pi -e 'print "    \"1684366557.751811\" => \"rocky8.8\",      #x86_64\n" if $. == 17' /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
+fi
+## reg disinfo of rocky8.9
+if ! grep -q 'rocky8.9'  /opt/xcat/lib/perl/xCAT/data/discinfo.pm ; then
+perl -pi -e 'print "    \"1700593425.194997\" => \"rocky8.9\",      #x86_64\n" if $. == 17' /opt/xcat/lib/perl/xCAT/data/discinfo.pm 
+fi
 
 # Register internal provisioning interface with xCAT for DHCP
 chdef -t site dhcpinterfaces="xcatmn|${sms_eth_internal}"

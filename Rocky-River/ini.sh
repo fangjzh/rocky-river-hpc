@@ -140,4 +140,20 @@ mkdir ins_logs
 mv *.sh.log ins_logs
 ####-----------end int 3-------------####
 
+### 更改数据库默认密码
+echo "## 请更改数据库默认密码，以及相关配置文件"
+
+## 预设想方法1 完成头节点安装之后执行以下命令，这个可以放到 Install.sh最后
+# mysql -uroot -p'78g*tw23.ysq' -e"ALTER USER 'root'@'localhost' IDENTIFIED BY 'newpasswd';"
+# mysql -uroot -p'78g*tw23.ysq' -e"ALTER USER 'slurmdb'@'localhost' IDENTIFIED BY 'newpasswd_sdb';"
+# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./sample_files/slurmconf_ref/slurmdbd.conf
+# 还得搜索一遍所有文件，以防遗漏
+
+## 预设想方法2 在执行当前脚本 ini.sh时，替换掉整个项目中的mysql的默认密码
+# sed -i 's/78g*tw23.ysq/newpasswd/g' ./functions/setup_sql.sh
+# sed -i 's/78g*tw23.ysq/newpasswd/g' ./functions/setup_slurm.sh
+# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./functions/setup_slurm.sh
+# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./sample_files/slurmconf_ref/slurmdbd.conf
+# 还得搜索一遍所有文件，以防遗漏
+
 echo "接下来请执行 Install.sh 脚本"

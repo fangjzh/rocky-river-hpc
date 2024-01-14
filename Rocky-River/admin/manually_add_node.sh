@@ -1,5 +1,5 @@
 #!/bin/sh
-
+## 这个脚本还未完成，作为一个参考脚本
 . /etc/profile.d/xcat.sh
 
 if [ -z $1 ]; then
@@ -7,6 +7,7 @@ if [ -z $1 ]; then
     exit
 fi
 
+## 这里是需要手动修改的部分
 i_mac=00:0C:29:D5:BE:17
 compute_prefix=cnode
 node_max=003
