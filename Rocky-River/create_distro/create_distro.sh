@@ -3,9 +3,15 @@
 ## https://mirrors.sjtug.sjtu.edu.cn/rocky/8.6/isos/x86_64/
 ## 该脚本在相应的rocky os的root下执行，系统磁盘根目录100G,opt目录100G空间
 
-rocky_re=8.8
+#这个脚本还得修改才行，因为意外中断之后，不太好继续后续动作
+# 目前脚本各部分变量没有混杂，基本是作用在一段命令范围内
+# 今后还是拆分为好
+set -e
+
+rocky_re=8.9
 iso_name=Rocky-${rocky_re}-x86_64-dvd1.iso
 
+## 还是先下载iso然后拷贝到root目录
 res_tmp=($(find /root /mnt /media /run/media -name ${iso_name}))
 if [ -z ${res_tmp[0]} ]; then
     wget https://mirrors.sjtug.sjtu.edu.cn/rocky/${rocky_re}/isos/x86_64/${iso_name}
@@ -73,7 +79,7 @@ wget -O /etc/yum.repos.d/fish.repo https://download.opensuse.org/repositories/sh
 ### 添加xcat 和 openhpc 本地源
 
 ## openHPC 下载 http://repos.openhpc.community/dist
-## 版本信息
+## 版本信息 hash值计算表示这个文件没变化
 ohpc_re=2.6
 ohpc_pkg_name=OpenHPC-${ohpc_re}.EL_8.x86_64.tar
 ##
@@ -160,19 +166,19 @@ cat ohpc-updates.list | xargs yum -y install --downloadonly --skip-broken
 ## 打包缓存为repo
 mkdir -p dep-packages
 dir=$(find /var/cache/yum/ -name 'epel*' -type d)
-cp -r ${dir}/packages/ dep-packages/
+/bin/cp -r ${dir}/packages/ dep-packages/
 
 dir=$(find /var/cache/yum/ -name 'kickstart-baseos*' -type d)
-cp -r ${dir}/packages/ dep-packages/
+/bin/cp -r ${dir}/packages/ dep-packages/
 
 dir=$(find /var/cache/yum/ -name 'kickstart-powertools*' -type d)
-cp -r ${dir}/packages/ dep-packages/
+/bin/cp -r ${dir}/packages/ dep-packages/
 
 dir=$(find /var/cache/yum/ -name 'kickstart-appstream*' -type d)
-cp -r ${dir}/packages/ dep-packages/
+/bin/cp -r ${dir}/packages/ dep-packages/
 
 dir=$(find /var/cache/yum/ -name 'shells_fish*' -type d)
-cp -r ${dir}/packages/ dep-packages/
+/bin/cp -r ${dir}/packages/ dep-packages/
 createrepo dep-packages
 tar -cf dep-packages.tar dep-packages/
 

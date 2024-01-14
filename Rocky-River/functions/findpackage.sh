@@ -1,6 +1,6 @@
 #!/bin/sh
 
-iso_name=Rocky-8.8-x86_64-dvd1.iso
+iso_name=Rocky-8.9-x86_64-dvd1.iso
 
 res_tmp=($(find /root /mnt /media /run/media -name ${iso_name}))
 if [ -z ${res_tmp[0]} ]; then
