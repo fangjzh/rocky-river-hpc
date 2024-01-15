@@ -6,7 +6,7 @@
 优盘格式可设置为exFAT，便于存放大于4G的文件。
 注意，写优盘时设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载exfat格式优盘。
 
-2. 下载项目所需包，给一个百度盘的地址 <br>
+2. 下载项目所需包(注意，该软件包不是本项目rocky river授权下的文件，以下提供的软件包为作者利用本项目代码进行相关软件打包作为测试使用，请勿直接用于商业项目)，给一个百度盘的地址 <br>
 <br>**最新版本：**<br>
 with rocky linux 8.9 提取码 enmn <br>
 链接: [https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w](https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w?pwd=enmn)
