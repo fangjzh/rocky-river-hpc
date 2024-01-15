@@ -1,9 +1,21 @@
+# 项目名称
+中文名：岩川
+英文名：Rocky River 
+# 项目许可
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+# 项目地址:
+[Rocky River HPC github page](https://github.com/fangjzh/rocky-river-hpc)
+
 # 项目logo
 ![logo](https://github.com/fangjzh/rocky-river-hpc/blob/master/Rocky-River/HPClogo/logo_r.png "Rocky River Logo")
-# 开发说明
 
+# 项目简介
+Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理工具，提供集群节点管理、任务调度、多用户多任务管理、集群监控、集群管理等服务。
+
+# 开发说明
 本项目旨在减轻初创科研团队HPC集群搭建和运维的困难。初创科研团队由于资金和硬件供应商技术缺乏等因素，需要额外的HPC运维技术支持。此项目可轻松地完成小规模HPC集群搭建，从学习的角度亦可促进HPC技术人才的培养。
-项目的原始出发点来自本人在博士期间为课题组提供HPC运维支持经历，该项目一方面是对多年HPC运维经验的总结，另一方面是本人在毕业后仍然可以为原课题组同门提供些许帮助。为了节约开发和部署时间，项目有以下考虑：
+项目的原始出发点来自本人在博士期间的HPC运维经历，该项目一方面是对多年HPC运维经验的总结，另一方面是为资金不宽裕的科研工作者在集群搭建方面提供些许帮助。为了节约开发和部署时间，项目有以下考虑：
 - 首先注重基础功能，即集群节点互联与统一管理、并行开发和运行环境、多用户多任务调度等，对于非主要功能可在开发和部署中适当削减。
 - 为开发方便，项目基于openhpc和xcat两个上游项目，操作系统首先之确定单个操作系统，即Rocky Linux。
 - 考虑到实际部署时的机房条件问题，项目将所有需要的文件打包，包括操作系统，最终发行版可以放在一个优盘里，无需互联网可部署。
@@ -16,7 +28,6 @@
 4. 由于本人工作原因，鸽的时间比较长，有问题可mail : fangjzh#foxmail.com 。防止抓取，'#'改成'@'！
 5. 项目的开发受到了HPC技术交流群（130653201）中各位大佬的支持和启发，如果觉得本项目对你有帮助，请慷慨地点击Star。
 
-项目地址:https://github.com/fangjzh/rocky-river-hpc
 
 ## 操作步骤与已有功能
 ### 步骤：
