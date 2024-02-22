@@ -1,5 +1,7 @@
 # 部署过程和存在的问题
 
+- [ ] 注意，实际部署中请修改数据库root密码，默认是‘78g*tw23.ysq’（可以在安装前替换脚本中的密码，或者安装完成之后修改）。slurmdbd安装时添加了slurmdbd数据库用户，密码为‘slurmdbd1234’,修改此用户密码时/etc/slurm/slurmdbd.conf文件存储的密码也要修改（这个文件对普通用户是不可读写的）。
+
 ## 简要使用步骤
 1. 准备一个32G+的优盘，下载ventoy，并将ventoy写入优盘。<br>
 [ventoy 项目地址](https://www.ventoy.net/cn/index.html)

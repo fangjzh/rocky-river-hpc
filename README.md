@@ -46,7 +46,7 @@ Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理
 ### To do list
 - [ ] 自定义共享目录
 - [ ] 完善用户添加脚本
-- [ ] 自定义数据库密码
+- [ ] 自定义数据库密码，这个有点重要！！
 - [ ] 得整一个license
 - [ ] 各项服务的检测与修复脚本
 - [ ] 提供slurm基本使用手册，用户限额配置，GPU调度等
