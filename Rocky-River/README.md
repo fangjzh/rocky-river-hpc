@@ -96,3 +96,5 @@ NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
 - [ ] 统一if后边的括号<br>
 if 之后的单括号 与 双括号 的区别，双括号可以避免变量里边的空变量导致判断失败,而双括号是bash才支持的。不过实际上在Centos/Rocky中/bin/sh都执向/bin/bash。所以本项目的 == 和 function 以及 [[]] 都被支持了。所以，应该将if [] 改成 if [[]]。
 
+- [ ] 在初始化脚本中添加提示，当前日期是否正确，太老的日期会导致repo密钥失效，从而使很多软件安装失败。
+- [ ] intel one api 生成module的脚本，需要输入y确认，然后目标目录变成/root/modulefiles目录了，原来在/opt/ohpc/pub/apps/intel/modulefiles，所以需要拷贝一下。或者需要需改脚本。
