@@ -68,7 +68,7 @@ sh ini.sh
 10. 修改slurm配置文件
 修改 /etc/slurm/slurm.conf，主要是修改节点核数，根据实际情况修改，比如：<br>
 NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
-意思是这些节点都具有两块CPU，每块CPU有32个物理核心，每个物理核心允许单个线程。
+意思是这些节点都具有两块CPU，每块CPU有32个物理核心，每个物理核心允许单个线程。另外要修改partition的时间限制。
 完成之后需要重启slurmctld服务。
 
 11.  添加用户<br>
