@@ -47,7 +47,7 @@ else
 fi
 
 ## how to make module###
-/opt/ohpc/pub/apps/intel/modulefiles-setup.sh >>${0##*/}.log 2>&1
+/opt/ohpc/pub/apps/intel/modulefiles-setup.sh --output-dir=/opt/ohpc/pub/apps/intel/modulefiles >>${0##*/}.log 2>&1
 echo 'export MODULEPATH=${MODULEPATH}:/opt/ohpc/pub/apps/intel/modulefiles' >>/etc/profile.d/lmod.sh
 
 cd $i_fold
