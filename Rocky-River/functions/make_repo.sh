@@ -1,38 +1,89 @@
 #!/bin/sh
-if [ -z ${sms_name} ]; then
-    source ./env.text
+
+# 加载公共函数
+if [ -f "./functions/common_functions.sh" ]; then
+    source "./functions/common_functions.sh"
+else
+    echo "[ERROR] 无法找到公共函数文件 common_functions.sh" >&2
+    exit 1
 fi
 
-echo "-->执行 $0 : 创建本地软件仓库 - - - - - - - -"
+# 检查必需的环境变量
+check_required_vars() {
+    local required_vars=("iso_path" "iso_name" "package_dir" "sms_ip")
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            log_error "环境变量 $var 未设置"
+        fi
+    done
+}
 
-###make local repo####
-perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+# 创建目录
+create_directories() {
+    log_info "创建必要目录"
+    mkdir -p /opt/repo/rocky
+    mkdir -p /media/Rocky
+}
 
-if [ ! -e ${iso_path}/${iso_name} ]; then
-    echo "${iso_path}/${iso_name} is not exist!!!"
-    exit
-fi
+# 禁用默认仓库
+disable_default_repos() {
+    log_info "禁用默认的 Rocky 仓库"
+    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+}
 
-mkdir -p /opt/repo/rocky
-mkdir -p /media/Rocky
-mount -o loop ${iso_path}/${iso_name} /media/Rocky
-cp -r /media/Rocky/* /opt/repo/rocky
-umount /media/Rocky
+# 挂载 ISO 并复制内容
+setup_rocky_repo() {
+    local iso_file="${iso_path}/${iso_name}"
+    
+    if [ ! -e "$iso_file" ]; then
+        log_error "$iso_file 不存在!!!"
+    fi
+    
+    log_info "挂载 ISO 并复制内容"
+    mount -o loop "$iso_file" /media/Rocky  >>.install_logs/${0##*/}.log 2>&1
+    if [ $? -ne 0 ]; then
+        log_error "挂载 ISO 失败"
+    fi
+    
+    cp -r /media/Rocky/* /opt/repo/rocky
+    umount /media/Rocky
+    
+    if [ $? -ne 0 ]; then
+        log_error "卸载 ISO 失败"
+    fi
+}
 
-### for virmachine mount cdrom device
-# mkdir /media/Rocky
-# mount -t auto /dev/cdrom /media/Rocky
-# cp -r /media/Rocky/*  /opt/repo/rocky
+# 解压依赖包
+extract_packages() {
+    log_info "解压依赖包"
+    
+    local packages=(
+        "${package_dir}/dep-packages.tar:/opt/repo/rocky"
+        "${package_dir}/kickstart-powertools.tar:/opt/repo/rocky"
+        "${package_dir}/openhpc.tar:/opt/repo"
+        "${package_dir}/xcat.tar:/opt/repo"
+    )
+    
+    for pkg in "${packages[@]}"; do
+        local tar_file="${pkg%:*}"
+        local dest_dir="${pkg#*:}"
+        
+        if [ ! -f "$tar_file" ]; then
+            log_error "包文件 $tar_file 不存在"
+        fi
+        
+        tar --no-same-owner -xf "$tar_file" -C "$dest_dir"
+        if [ $? -ne 0 ]; then
+            log_error "解压 $tar_file 失败"
+        fi
+    done
+}
 
-tar --no-same-owner -xf ${package_dir}/dep-packages.tar -C /opt/repo/rocky
-tar --no-same-owner -xf ${package_dir}/kickstart-powertools.tar -C /opt/repo/rocky
-tar --no-same-owner -xf ${package_dir}/openhpc.tar -C /opt/repo
-tar --no-same-owner -xf ${package_dir}/xcat.tar -C /opt/repo
-
-# find /opt/repo/rocky/epel -type f -exec chmod 444 {} \;
-# chown -R root.root /opt/repo/rocky
-
-cat <<EOF >/etc/yum.repos.d/Rocky-local.repo
+# 创建本地仓库配置
+create_local_repo_config() {
+    log_info "创建本地仓库配置文件"
+    
+    cat <<EOF >/etc/yum.repos.d/Rocky-local.repo
 # Rocky-local.repo
 #
 # You can use this repo to install items directly off the installation local.
@@ -63,28 +114,54 @@ gpgcheck=0
 enabled=1
 
 EOF
+}
 
-## /bin/cp ${package_dir}/Rocky-local.repo  /etc/yum.repos.d/
-## chmod 644 /etc/yum.repos.d/Rocky-local.repo
-/opt/repo/openhpc/make_repo.sh
-/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh
-/opt/repo/xcat/xcat-core/mklocalrepo.sh
+# 创建 OpenHPC 和 xCAT 仓库
+create_additional_repos() {
+    log_info "创建 OpenHPC 和 xCAT 仓库"
+    
+    if [ -x "/opt/repo/openhpc/make_repo.sh" ]; then
+        /opt/repo/openhpc/make_repo.sh  >>.install_logs/${0##*/}.log 2>&1
+    else
+        log_warn "/opt/repo/openhpc/make_repo.sh 不存在或不可执行"
+    fi
+    
+    if [ -x "/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh" ]; then
+        /opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh  >>.install_logs/${0##*/}.log 2>&1
+    else
+        log_warn "/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh 不存在或不可执行"
+    fi
+    
+    if [ -x "/opt/repo/xcat/xcat-core/mklocalrepo.sh" ]; then
+        /opt/repo/xcat/xcat-core/mklocalrepo.sh   >>.install_logs/${0##*/}.log 2>&1
+    else
+        log_warn "/opt/repo/xcat/xcat-core/mklocalrepo.sh 不存在或不可执行"
+    fi
+}
 
-yum clean all
-yum makecache
+# 更新 yum 缓存
+update_yum_cache() {
+    log_info "更新 yum 缓存"
+    yum clean all >>.install_logs/${0##*/}.log 2>&1
+    yum makecache  >>.install_logs/${0##*/}.log 2>&1
+    
+    if [ $? -ne 0 ]; then
+        log_error "更新 yum 缓存失败"
+    else
+        log_info "更新 yum 缓存成功"
+    fi
+}
 
-if [ $? != 0 ]; then
-    echo "make repo error!"
-    exit
-else
-    echo "make repo succeed !"
-fi
-
-echo "-->执行 $0 : 创建计算节点仓库及配置文件 - - - - - - - -"
-
-### add http repo in head node for compute nodes
-yum -y -q install httpd httpd-filesystem httpd-tools dos2unix >>${0##*/}.log 2>&1
-cat >/etc/httpd/conf.d/repo.conf <<'EOF'
+# 配置 HTTP 服务器
+setup_http_server() {
+    log_info "安装并配置 HTTP 服务器"
+    
+    yum -y -q install httpd httpd-filesystem httpd-tools dos2unix >>.install_logs/${0##*/}.log 2>&1
+    if [ $? -ne 0 ]; then
+        log_error "安装 httpd 失败"
+    fi
+    
+    cat >/etc/httpd/conf.d/repo.conf <<'EOF'
 AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
 <Directory "/opt/repo">
     Options Indexes FollowSymLinks Includes MultiViews
@@ -92,20 +169,60 @@ AliasMatch ^/opt/repo/(.*)$ "/opt/repo/$1"
     Require all granted
 </Directory>
 EOF
-systemctl restart httpd
-####
+    
+    systemctl restart httpd
+    if [ $? -ne 0 ]; then
+        log_error "重启 httpd 服务失败"
+    fi
+}
 
-#######################
-### create repo file for compute node ###
-##package_dir=/root/package
-cat /etc/yum.repos.d/Rocky-local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >/opt/repo/compute_node.repo
-echo "     " >>/opt/repo/compute_node.repo
-cat /etc/yum.repos.d/OpenHPC.local.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
-echo "     " >>/opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-core.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
-echo "     " >>/opt/repo/compute_node.repo
-cat /etc/yum.repos.d/xcat-dep.repo | sed 's/file:\//http:\/\/'"${sms_ip}"':80/' >>/opt/repo/compute_node.repo
-echo "     " >>/opt/repo/compute_node.repo
+# 为计算节点创建仓库配置
+create_compute_node_repo() {
+    log_info "为计算节点创建仓库配置"
+    
+    local repo_file="/opt/repo/compute_node.repo"
+    
+    # 创建基础仓库配置
+    sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/Rocky-local.repo > "$repo_file"
+    echo "" >> "$repo_file"
+    
+    # 添加 OpenHPC 仓库配置
+    if [ -f /etc/yum.repos.d/OpenHPC.local.repo ]; then
+        sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/OpenHPC.local.repo >> "$repo_file"
+        echo "" >> "$repo_file"
+    fi
+    
+    # 添加 xCAT 仓库配置
+    if [ -f /etc/yum.repos.d/xcat-core.repo ]; then
+        sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/xcat-core.repo >> "$repo_file"
+        echo "" >> "$repo_file"
+    fi
+    
+    if [ -f /etc/yum.repos.d/xcat-dep.repo ]; then
+        sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/xcat-dep.repo >> "$repo_file"
+        echo "" >> "$repo_file"
+    fi
+}
 
-echo "-->执行 $0 : 创建本地软件仓库完成 + = + = + = + = + ="
-echo "$0 执行完成！" >${0##*/}.log
+# 主函数
+make_repo() {
+    log_info "执行: 创建本地软件仓库"
+    
+    load_env
+    check_required_vars
+    create_directories
+    disable_default_repos
+    setup_rocky_repo
+    extract_packages
+    create_local_repo_config
+    create_additional_repos
+    update_yum_cache
+    setup_http_server
+    create_compute_node_repo
+    
+    #log_info "执行 $0 : 创建本地软件仓库完成"
+    echo "$0 执行完成！" >.install_logs/${0##*/}.log
+}
+
+# 执行主函数
+make_repo

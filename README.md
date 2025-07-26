@@ -66,4 +66,4 @@ Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理
 - [x] 得整一个license
 
 ### bug
-- [ ] addnode部分，数量超过8和就有问题。似乎是数量函数哪里有点格式问题
+- [x] addnode部分，数量超过8和就有问题。似乎是数量函数哪里有点格式问题，这是shell脚本8进制问题，现在已经解决

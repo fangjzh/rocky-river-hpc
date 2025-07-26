@@ -1,112 +1,186 @@
-#!/bin/sh
+#!/bin/bash
 
+# 设置环境变量（这些变量将在部署时被替换）
 export sms_ip=10.0.0.1
 export domain_name=local
 export sms_name=cjhpc
 
-perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
-perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/local-*.repo
-wget -O /etc/yum.repos.d/compute_node.repo http://${sms_ip}:80//opt/repo/compute_node.repo
-yum clean all
-yum makecache
+# 日志函数
+log_info() {
+    echo "[INFO] $1"
+}
 
-# Disable firewall for ${nodename}s
-systemctl disable firewalld
+log_error() {
+    echo "[ERROR] $1" >&2
+}
 
-# set dns
-echo "nameserver ${sms_ip}" >>/etc/resolv.conf
+# 禁用默认仓库
+disable_default_repos() {
+    log_info "禁用默认仓库"
+    
+    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/local-*.repo
+}
 
-###install software into ${nodename} node ###
-yum -y -q install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
+# 配置计算节点仓库
+configure_compute_repo() {
+    log_info "配置计算节点仓库"
+    
+    wget -O /etc/yum.repos.d/compute_node.repo http://${sms_ip}:80//opt/repo/compute_node.repo
+    if [ $? -ne 0 ]; then
+        log_error "下载计算节点仓库配置失败"
+    fi
+    
+    yum clean all
+    yum makecache
+}
 
-perl -pi -e "s/remote-fs.target.*/remote-fs.target network-online.target/" /usr/lib/systemd/system/slurmd.service
-perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4' /usr/lib/systemd/system/slurmd.service
-systemctl daemon-reload
+# 禁用防火墙
+disable_firewall() {
+    log_info "禁用防火墙"
+    systemctl disable firewalld >/dev/null 2>&1
+}
 
-systemctl enable munge
-systemctl enable slurmd
-echo SLURMD_OPTIONS="--conf-server ${sms_ip}" >/etc/sysconfig/slurmd
+# 配置DNS
+configure_dns() {
+    log_info "配置DNS"
+    
+    # 检查是否已存在相同的nameserver条目
+    if ! grep -q "^nameserver ${sms_ip}" /etc/resolv.conf; then
+        echo "nameserver ${sms_ip}" >>/etc/resolv.conf
+    fi
+}
 
-timedatectl set-timezone Asia/Shanghai
-# Add Network Time Protocol (NTP) support
-##### it has been listed in /opt/xcat/share/xcat/install/rocky/compute.rocky8.pkglist
-# yum -y  install chrony
-# systemctl enable chronyd
-# # Identify master host as local NTP server
-# echo "server ${sms_ip} iburst" >> /etc/chrony.conf
-# systemctl restart chronyd
+# 安装计算节点软件包
+install_compute_packages() {
+    log_info "安装计算节点软件包"
+    
+    yum -y -q install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
+    if [ $? -ne 0 ]; then
+        log_error "安装计算节点软件包失败"
+    fi
+}
 
-##################### add autofs #################################
-yum -y -q install autofs
-systemctl enable autofs
+# 配置Slurm服务
+configure_slurm() {
+    log_info "配置Slurm服务"
+    
+    perl -pi -e "s/remote-fs.target.*/remote-fs.target network-online.target/" /usr/lib/systemd/system/slurmd.service
+    perl -pi -e 'print"Wants=network-online.target named.service\n" if $. == 4' /usr/lib/systemd/system/slurmd.service
+    systemctl daemon-reload
+    
+    systemctl enable munge >/dev/null 2>&1
+    systemctl enable slurmd >/dev/null 2>&1
+    echo "SLURMD_OPTIONS=\"--conf-server ${sms_ip}\"" >/etc/sysconfig/slurmd
+}
 
-##autofs ##
-cat >/etc/auto.master <<'EOF'
+# 设置时区
+set_timezone() {
+    log_info "设置时区为 Asia/Shanghai"
+    timedatectl set-timezone Asia/Shanghai
+}
+
+# 配置Autofs
+configure_autofs() {
+    log_info "配置Autofs"
+    
+    yum -y -q install autofs
+    if [ $? -ne 0 ]; then
+        log_error "安装autofs失败"
+    fi
+    
+    systemctl enable autofs >/dev/null 2>&1
+    
+    # 配置auto.master
+    cat >/etc/auto.master <<'EOF'
 /-     /etc/auto.pub  --timeout=1200
 /home  /etc/auto.home   --timeout=1200
 EOF
-echo "/opt/ohpc/pub        ${sms_ip}:/opt/ohpc/pub" >/etc/auto.pub
-echo "*    ${sms_ip}:/home/&" >/etc/auto.home
+    
+    # 配置NFS挂载点
+    echo "/opt/ohpc/pub        ${sms_ip}:/opt/ohpc/pub" >/etc/auto.pub
+    echo "*    ${sms_ip}:/home/&" >/etc/auto.home
+    
+    systemctl restart autofs >/dev/null 2>&1
+}
 
-systemctl restart autofs
-##################### add autofs  end #############################
+# 更新内存锁定设置
+update_memlock_settings() {
+    log_info "更新内存锁定设置"
+    
+    # 检查是否已经设置了memlock
+    if ! grep -q "soft memlock unlimited" /etc/security/limits.conf; then
+        perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limits.conf
+    fi
+    
+    if ! grep -q "hard memlock unlimited" /etc/security/limits.conf; then
+        perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
+    fi
+}
 
-# Update memlock settings within ${nodename} image, this is not wort with psh
-perl -pi -e 's/# End of file/\* soft memlock unlimited\n$&/s' /etc/security/limits.conf
-perl -pi -e 's/# End of file/\* hard memlock unlimited\n$&/s' /etc/security/limits.conf
-#####
+# 配置SSH通过资源管理器控制
+configure_ssh_with_slurm() {
+    log_info "配置SSH通过资源管理器控制"
+    
+    # 检查是否已添加pam_slurm条目
+    if ! grep -q "pam_slurm.so" /etc/pam.d/sshd; then
+        echo "account required pam_slurm.so" >>/etc/pam.d/sshd
+    fi
+    
+    systemctl restart sshd >/dev/null 2>&1
+}
 
-# Enable ssh control via resource manager
-echo "account required pam_slurm.so" >>/etc/pam.d/sshd
-systemctl restart sshd
-
-####
-yum install -y -q rpcbind yp-tools ypbind authconfig
-systemctl enable rpcbind ypbind
-echo "NISDOMAIN=${domain_name}" >>/etc/sysconfig/network
-
-echo "# generated by /sbin/dhclient-script" >/etc/yp.conf
-echo "domain ${domain_name} server ${sms_ip}" >>/etc/yp.conf
-
-###
-authconfig --update --enablenis
-
-###
-systemctl restart rpcbind ypbind
-
-### 这一段在计算节点上运行即可监控计算节点，注意计算节点要时间同步
-telegraf=1
-if [ ! $telegraf ]; then
-
-    cat <<EOF >/etc/systemd/system/telegraf.service
-[Unit]
-Description="telegraf"
-After=network.target
-
-[Service]
-Type=simple
-
-ExecStart=/opt/ohpc/pub/apps/telegraf/telegraf --config telegraf.conf
-WorkingDirectory=/opt/ohpc/pub/apps/telegraf
-
-SuccessExitStatus=0
-LimitNOFILE=65536
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=telegraf
-KillMode=process
-KillSignal=SIGQUIT
-TimeoutStopSec=5
-Restart=always
-
-
-[Install]
-WantedBy=multi-user.target
+# 配置NIS客户端
+configure_nis_client() {
+    log_info "配置NIS客户端"
+    
+    yum install -y -q rpcbind yp-tools ypbind authconfig
+    if [ $? -ne 0 ]; then
+        log_error "安装NIS客户端组件失败"
+    fi
+    
+    systemctl enable rpcbind >/dev/null 2>&1
+    systemctl enable ypbind >/dev/null 2>&1
+    
+    # 设置NIS域名
+    if ! grep -q "^NISDOMAIN=" /etc/sysconfig/network 2>/dev/null; then
+        echo "NISDOMAIN=${domain_name}" >>/etc/sysconfig/network
+    fi
+    
+    # 配置yp.conf
+    cat >/etc/yp.conf <<EOF
+# generated by /sbin/dhclient-script
+domain ${domain_name} server ${sms_ip}
 EOF
+    
+    # 启用NIS认证
+    authconfig --update --enablenis >/dev/null 2>&1
+    
+    # 重启服务
+    systemctl restart rpcbind >/dev/null 2>&1
+    systemctl restart ypbind >/dev/null 2>&1
+}
 
-    systemctl daemon-reload
-    systemctl enable telegraf
-    systemctl restart telegraf
-    systemctl status telegraf
+# 主函数
+main() {
+    log_info "开始执行计算节点后置引导脚本"
+    
+    disable_default_repos
+    configure_compute_repo
+    disable_firewall
+    configure_dns
+    install_compute_packages
+    configure_slurm
+    set_timezone
+    configure_autofs
+    update_memlock_settings
+    configure_ssh_with_slurm
+    configure_nis_client
+    
+    log_info "计算节点后置引导脚本执行完成"
 
-fi
+    echo "postboot finished" > /root/log.postboot.done
+}
+
+# 执行主函数
+main

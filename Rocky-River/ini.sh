@@ -1,159 +1,220 @@
 #!/bin/sh
+# OHPC官方可以参考的脚本和输入文件需要：
+# yum -y install docs-ohpc
+# 路径 /opt/ohpc/pub/doc/recipes/rocky8 下，有input.local
+# /opt/ohpc/pub/doc/recipes/rocky8/x86_64/xcat/slurm/ 下有Install_guide.pdf  recipe.sh 可以作为参考
 
-################################
-#####       功能规划       #####
-################################
-### 交互脚本，输入基本信息，产生Install.sh脚本以及env.text
-### Install.sh脚本调用多个函数，而全局变量存储在env.text里边，通过source 命令生效
-### 各个功能脚本放在functions文件夹里边
-### 脚本有出错接着执行的功能
-### 脚本应添加检测功能
-### 要产生一个添加用户脚本，放在root目录
-### 同样地添加节点脚本
-##################################
+iso_name="Rocky-8.10-x86_64-dvd1.iso"
+echo "计算节点系统镜像为 ${iso_name}"
 
-### 配置文件产生起始
-### 删除先前产生的配置文件
-if [ -e env.text ]; then
-    rm env.text
+# 初始化日志目录
+LOG_DIR="ins_logs"
+INSTALL_SCRIPT="Install.sh"
+ENV_FILE="env.text"
+
+# 清理旧的配置文件
+if [ -e "$ENV_FILE" ]; then
+    rm -f "$ENV_FILE"
 fi
 
-#########################################
-#############-----int 0-----#############
-#########################################
-### 检查脚本文件的权限与完整性
-filelist=(
-    reg_network.sh
-    set_headnode.sh
-    setup_clustershell.sh
-    setup_devtools.sh
-    setup_monitor.sh
-    setup_network.sh
-    setup_nfs.sh
-    setup_nis.sh
-    setup_ntp.sh
-    setup_ohpc_xcat.sh
-    setup_slurm.sh
-    setup_sql.sh
-    user_define.sh
-)
+# 创建日志目录并清理旧日志
+mkdir -p "$LOG_DIR"
+mv *.sh.log "$LOG_DIR" 2>/dev/null
 
-for ifile in ${filelist[@]}; do
-    if [ ! -e ./functions/${ifile} ]; then
-        echo "${ifile} 文件不存在!!!"
-        exit
+# 日志函数
+log_info() {
+    echo "[INFO] $1"
+}
+
+log_error() {
+    echo "[ERROR] $1" >&2
+    exit 1
+}
+
+# 检查日期并提示用户确认
+check_date() {
+    current_date=$(date +"%Y-%m-%d %H:%M:%S")
+    echo ""
+    echo "请确认当前系统时间是否正确："
+    echo "当前时间: ${current_date}"
+    read -p "是否继续执行？(y/n): " choice
+    case "$choice" in
+        y|Y ) log_info "用户确认时间正确，继续执行。";;
+        n|N ) log_error "用户取消执行，脚本终止。";;
+        * ) log_error "无效输入，脚本终止。";;
+    esac
+}
+
+# 检查脚本文件权限与完整性
+check_function_files() {
+    local filelist=(
+        reg_network.sh
+        set_headnode.sh
+        setup_clustershell.sh
+        setup_devtools.sh
+        setup_monitor.sh
+        setup_network.sh
+        setup_nfs.sh
+        setup_nis.sh
+        setup_ntp.sh
+        setup_ohpc_xcat.sh
+        setup_slurm.sh
+        setup_sql.sh
+        user_define.sh
+    )
+
+    for file in "${filelist[@]}"; do
+        if [ ! -e "./functions/$file" ]; then
+            log_error "$file 文件不存在!!!"
+        fi
+    done
+
+    chmod +x ./functions/*.sh
+    log_info "功能脚本权限检查完成"
+}
+
+# 寻找安装包文件的位置并判断其完整性
+check_package_files() {
+    ./functions/findpackage.sh "$iso_name"
+    if [ $? -ne 0 ]; then
+        log_error "安装包文件检查失败"
     fi
-done
+    log_info "安装包文件检查完成"
+}
 
-chmod +x ./functions/*.sh
+# 设置环境变量，生成 env.text 文件
+generate_env_file() {
+    ./functions/reg_name.sh
+    ./functions/reg_network.sh
 
-### 检查服务是否安装和启动 underdevelop
-## dhcpd ?
+    # mysql root 密码
+    mysql_root_password=$(openssl rand -base64 12)
+    # 将密码写入环境变量文件
+    echo "## MariaDB root 密码：" >>env.text
+    echo "export mysql_root_pw=${mysql_root_password}" >>env.text
 
-####-----------end int 0-------------####
+    # slurmdb 密码
+    slurmdb_password=$(openssl rand -base64 12)
+    echo "## SlurmDBD 密码：" >>env.text
+    echo "export slurmdb_pw=${slurmdb_password}" >>env.text
 
-#########################################
-#############-----int 1-----#############
-#########################################
-### 寻找安装包文件的位置,判断其完整性
-./functions/findpackage.sh
-if [ $? -ne 0 ]; then
-    exit
-fi
-####-----------end int 1-------------####
+    # xcat root 密码
+    xcat_root_password=$(openssl rand -base64 12)
+    # 将密码写入环境变量文件
+    echo "## xCAT root 密码：" >>env.text
+    echo "export xcat_root_pw=${xcat_root_password}" >>env.text
+    log_info "MariaDB root / SlurmDBD / xCAT root 密码已生成"
 
-#########################################
-#############-----int 2-----#############
-#########################################
-### 设置环境变量，生成 env.text 文件
-### 确定集群名字
-./functions/reg_name.sh
+    log_info "环境变量文件 env.text 生成完成"
+}
 
-### 确定集群网络参数
-./functions/reg_network.sh
-####-----------end int 2-------------####
+# 生成 Install.sh 脚本
+generate_install_script() {
+    cat <<'EOF' >"$INSTALL_SCRIPT"
+#!/bin/sh
 
-#########################################
-#############-----int 3-----#############
-#########################################
-### 生成 Install.sh
-
-echo "#!/bin/sh" >Install.sh
-cat <<EOF >>Install.sh
-if [ ! -e ./env.text ]; then
+if [ ! -e "./env.text" ]; then
     echo "错误：安装环境变量文件 env.text 未产生！"
     exit 10
 else
-    source ./env.text
+    source "./env.text"
 fi
+
+# 定义标记文件目录
+MARKER_DIR=".install_markers"
+mkdir -p "$MARKER_DIR"
+
+# 定义日志文件目录
+LOG_DIR=".install_logs"
+mkdir -p "$LOG_DIR"
+
+# 定义标记函数
+step_marker() {
+    local step_name="$1"
+    touch "$MARKER_DIR/$step_name"
+}
+
+# 检查步骤是否已经执行
+should_skip_step() {
+    local step_name="$1"
+    [ -f "$MARKER_DIR/$step_name" ]
+}
+
+log_info() {
+    echo "[INFO] $1"
+}
+
+log_error() {
+    echo "[ERROR] $1" >&2
+    exit 1
+}
+
+# 错误处理函数
+handle_error() {
+    log_error "步骤 $current_step 失败，脚本停止。"
+}
+
+# 定义步骤执行函数
+run_step() {
+    local step_name="$1"
+    local step_command="$2"
+
+    current_step="$step_name"
+    if should_skip_step "$step_name"; then
+        log_info "跳过步骤: $step_name (已经执行过)"
+        return 0
+    fi
+
+    log_info "开始执行步骤: $step_name -> -> ->"
+    eval "$step_command"
+    local exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        step_marker "$step_name"
+        log_info "步骤完成: $step_name <- <- <-"
+        echo ""
+    else
+        log_error "步骤失败: $step_name"
+        return $exit_code
+    fi
+}
+
+# 错误时执行处理函数
+trap 'handle_error' ERR
+
+set -e
+
+# 执行安装步骤
+run_step "make_repo" "./functions/make_repo.sh"
+run_step "set_headnode" "./functions/set_headnode.sh"
+run_step "setup_network" "./functions/setup_network.sh"
+run_step "setup_ntp" "./functions/setup_ntp.sh"
+run_step "setup_sql" "./functions/setup_sql.sh"
+run_step "setup_ohpc_xcat" "./functions/setup_ohpc_xcat.sh"
+run_step "setup_slurm" "./functions/setup_slurm.sh"
+run_step "setup_nis" "./functions/setup_nis.sh"
+run_step "setup_nfs" "./functions/setup_nfs.sh"
+run_step "setup_clustershell" "./functions/setup_clustershell.sh"
+run_step "setup_devtools" "./functions/setup_devtools.sh"
+run_step "user_define" "./functions/user_define.sh"
+
+log_info "所有步骤执行完成"
 EOF
-### 产生本地 repo >> Install.sh（这里依赖httpd，已经添加）
-echo "### 产生本地 repo" >>Install.sh
-echo "./functions/make_repo.sh" >>Install.sh
 
-### 设置管理节点时区、防火墙等 >> Install.sh
-echo "### 设置管理节点时区、防火墙等" >>Install.sh
-echo "./functions/set_headnode.sh" >>Install.sh
+    chmod +x "$INSTALL_SCRIPT"
+    log_info "Install.sh 脚本生成完成"
+}
 
-### 设置网络 >> Install.sh
-echo "### 设置网络" >>Install.sh
-echo "./functions/setup_network.sh" >>Install.sh
+# 主函数
+main() {
+    check_date
+    check_function_files
+    check_package_files
+    generate_env_file
+    generate_install_script
 
-### 安装ntp-server >> Install.sh
-echo "### 安装ntp-server" >>Install.sh
-echo "./functions/setup_ntp.sh" >>Install.sh
+    echo "接下来请执行 Install.sh 脚本"
+}
 
-### 安装 mysql >> Install.sh
-echo "### 安装 mysql" >>Install.sh
-echo "./functions/setup_sql.sh" >>Install.sh
-
-## 安装 ohpc、xcat >> Install.sh
-echo "## 安装 ohpc、xcat" >>Install.sh
-echo "./functions/setup_ohpc_xcat.sh" >>Install.sh
-
-## 安装 slurm >> Install.sh
-echo "## 安装 slurm " >>Install.sh
-echo "./functions/setup_slurm.sh" >>Install.sh
-
-## 安装 nis >> Install.sh
-echo "## 安装 nis" >>Install.sh
-echo "./functions/setup_nis.sh" >>Install.sh
-
-## 安装 nfs >> Install.sh (这里需要有ohpc产生的目录/opt/ohpc/pub)
-echo "## 安装 nfs " >>Install.sh
-echo "./functions/setup_nfs.sh" >>Install.sh
-
-## 安装 cluster shell >> Install.sh 
-## clustershell不是必要的，xcat已经包含了相关功能
-echo "## 安装 cluster shel" >>Install.sh
-echo "./functions/setup_clustershell.sh" >>Install.sh
-
-## 安装编译工具 >> Install.sh
-echo "## 安装编译工具" >>Install.sh
-echo "./functions/setup_devtools.sh" >>Install.sh
-
-### 添加自定义设置
-echo "### 添加自定义设置" >>Install.sh
-echo "./functions/user_define.sh" >>Install.sh
-chmod +x Install.sh
-mkdir ins_logs
-mv *.sh.log ins_logs
-####-----------end int 3-------------####
-
-### 更改数据库默认密码
-echo "## 请更改数据库默认密码，以及相关配置文件"
-
-## 预设想方法1 完成头节点安装之后执行以下命令，这个可以放到 Install.sh最后
-# mysql -uroot -p'78g*tw23.ysq' -e"ALTER USER 'root'@'localhost' IDENTIFIED BY 'newpasswd';"
-# mysql -uroot -p'78g*tw23.ysq' -e"ALTER USER 'slurmdb'@'localhost' IDENTIFIED BY 'newpasswd_sdb';"
-# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./sample_files/slurmconf_ref/slurmdbd.conf
-# 还得搜索一遍所有文件，以防遗漏
-
-## 预设想方法2 在执行当前脚本 ini.sh时，替换掉整个项目中的mysql的默认密码
-# sed -i 's/78g*tw23.ysq/newpasswd/g' ./functions/setup_sql.sh
-# sed -i 's/78g*tw23.ysq/newpasswd/g' ./functions/setup_slurm.sh
-# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./functions/setup_slurm.sh
-# sed -i 's/slurmdb123456/newpasswd_sdb/g' ./sample_files/slurmconf_ref/slurmdbd.conf
-# 还得搜索一遍所有文件，以防遗漏
-
-echo "接下来请执行 Install.sh 脚本"
+# 执行主函数
+main
