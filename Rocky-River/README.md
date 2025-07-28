@@ -9,20 +9,19 @@
 **最新版本：**<br>
 with rocky linux 8.10 提取码: bdze  <br>
 链接: [https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ](https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ?pwd=bdze) <br>
-
 注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.10 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.10/isos/x86_64/Rocky-8.10-x86_64-dvd1.iso) <br>
 
-往期版本：<br>
-with rocky linux 8.9 提取码 enmn <br>
-链接: [https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w](https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w?pwd=enmn) <br>
-注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.9 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.9/isos/x86_64/Rocky-8.9-x86_64-dvd1.iso) <br>
+&emsp;&emsp;往期版本：<br>
+&emsp;&emsp;with rocky linux 8.9 提取码 enmn <br>
+&emsp;&emsp;链接: [https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w](https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w?pwd=enmn) <br>
+&emsp;&emsp;注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.9 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.9/isos/x86_64/Rocky-8.9-x86_64-dvd1.iso) <br>
 
-with rocky linux 8.8 提取码 dzr6<br>
-链接: [https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q](https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q?pwd=dzr6) <br>
-注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.8 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso) <br>
+&emsp;&emsp;with rocky linux 8.8 提取码 dzr6<br>
+&emsp;&emsp;链接: [https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q](https://pan.baidu.com/s/1c_eXUCx54zQFk5Vzi_q_0Q?pwd=dzr6) <br>
+&emsp;&emsp;注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.8 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso) <br>
 
-with rocky linux 8.6 提取码 l8ya <br>
-链接: [https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ](https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ?pwd=l8ya) <br>
+&emsp;&emsp;with rocky linux 8.6 提取码 l8ya <br>
+&emsp;&emsp;链接: [https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ](https://pan.baidu.com/s/1h3flpNhD48oNdN8cjgETrQ?pwd=l8ya) <br>
 
 
 1. 安装Rocky Linux<br>
