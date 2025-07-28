@@ -32,7 +32,7 @@ Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理
 ## 操作步骤与已有功能
 ### 步骤：
 - 参考 Rocky-River 目录下的 [README.md](https://github.com/fangjzh/rocky-river-hpc/blob/master/Rocky-River/README.md)
-- 参考视频：https://www.bilibili.com/video/BV1Do4y1j7qg
+- 参考视频：https://www.bilibili.com/video/BV13F8EzcE37
 
 
 ### 功能：
