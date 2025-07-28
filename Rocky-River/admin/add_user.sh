@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 加载公共函数
 if [ -f "./functions/common_functions.sh" ]; then
@@ -53,7 +53,6 @@ add_user() {
 
 # 生成随机密码
 generate_random_password() {
-    log_info "生成随机密码"
     password=$(openssl rand -base64 12)
     echo "$password"
 }
@@ -103,20 +102,20 @@ update_nis_database() {
 }
 
 # 配置 Slurm 用户权限
-configure_slurm_user() {
-    log_info "配置 Slurm 用户权限"
-    
-    if [ -f "/etc/slurm/slurm.conf" ]; then
-        if grep -q "AccountingStorageEnforce=account" "/etc/slurm/slurm.conf"; then
-            sacctmgr -i add account "$username" > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                log_warn "添加 Slurm 账户失败"
-            fi
-        fi
-    else
-        log_warn "/etc/slurm/slurm.conf 文件不存在"
-    fi
-}
+#configure_slurm_user() {
+#    log_info "配置 Slurm 用户权限"
+#    
+#    if [ -f "/etc/slurm/slurm.conf" ]; then
+#        if grep -q "AccountingStorageEnforce=account" "/etc/slurm/slurm.conf"; then
+#            sacctmgr -i add account "$username" > /dev/null 2>&1
+#            if [ $? -ne 0 ]; then
+#                log_warn "添加 Slurm 账户失败"
+#            fi
+#        fi
+#    else
+#        log_warn "/etc/slurm/slurm.conf 文件不存在"
+#    fi
+#}
 
 # 主函数
 main() {
@@ -131,7 +130,7 @@ main() {
     set_user_password
     force_change_password_on_first_login
     update_nis_database
-    configure_slurm_user
+    #configure_slurm_user
     
     log_info "用户 $username 已成功添加"
     echo ""

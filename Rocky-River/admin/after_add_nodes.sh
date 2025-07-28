@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 加载公共函数
 if [ -f "./functions/common_functions.sh" ]; then
@@ -51,29 +51,24 @@ get_node_info() {
 check_node_status() {
     log_info "检测节点状态"
 
-    if [ -z "$nodes_array" ]; then
-        nodes_array=$(nodels "$nodes_xcat")
-    fi
+    local nodes_array=($(nodels "$nodes_xcat"))
 
     # 如果nodes_array为空，则执行nodels命令
-    if [ -z "$nodes_array" ]; then
+    if [ "${#nodes_array[@]}" -eq 0 ]; then
         log_error "未找到节点"
     fi
 
-    # 转换成数组
-    read -ra n_array <<< "$nodes_array"
-
     # 等待所有节点准备就绪
-    all_ready=false
-    wait_count=0
-    max_wait=6  # 最多等待6次，每次10秒，总共1分钟
+    local all_ready=false
+    local wait_count=0
+    local max_wait=6  # 最多等待6次，每次10秒，总共1分钟
     
     while [ "$all_ready" = false ] && [ $wait_count -lt $max_wait ]; do
         all_ready=true
-        unready_nodes=""
+        local unready_nodes=""
         
         # 检查每个节点是否能SSH登录以及是否存在 /root/log.postboot.done 文件
-        for node in "${n_array[@]}"; do
+        for node in "${nodes_array[@]}"; do
             # 首先检查SSH连接是否可用
             log_info "Checking SSH connection to $node..."
             if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$node" exit 2>/dev/null; then
@@ -87,7 +82,7 @@ check_node_status() {
             if ! ssh "$node" [ -f /root/log.postboot.done ] >/dev/null 2>&1; then
                 all_ready=false
                 unready_nodes="$unready_nodes $node"
-                log_info "节点 $node SSH连接成功但 /root/log.postboot.done 文件不存在"
+                log_info "节点 $node SSH连接成功但未就绪"
             else
                 log_info "节点 $node 已准备就绪"
             fi
@@ -95,7 +90,7 @@ check_node_status() {
         
         if [ "$all_ready" = false ]; then
             wait_count=$((wait_count + 1))
-            log_info "等待节点准备就绪 ($wait_count/$max_wait)..."
+            log_info "等待节点 $unready_nodes 准备就绪 ($wait_count/$max_wait)..."
             sleep 10
         fi
     done
@@ -197,7 +192,7 @@ configure_intel_module() {
     fi
 
     # 添加 MODULEPATH 
-    pdsh -w "$nodes_xcat" "echo 'export MODULEPATH=\$MODULEPATH:/opt/ohpc/pub/apps/intel/modulefiles:/opt/ohpc/pub/moduledeps/gnu12:/opt/ohpc/pub/modulefiles' >> /etc/profile.d/lmod.sh" >>${0##*/}.log 2>&1
+    pdsh -w "$nodes_xcat" "echo 'export MODULEPATH=\$MODULEPATH:/opt/ohpc/pub/apps/intel/modulefiles' >> /etc/profile.d/lmod.sh" >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then   ### 同样，$?无法表示执行是否成功
         log_warn "配置 Intel 模块路径失败"
     fi
@@ -285,10 +280,9 @@ main() {
     get_node_info
     check_node_status
 
-
-
     ## 依据计算节点硬件更新头节点的slurm 配置文件
     # 访问特定元素 (例如，第一个元素)
+    n_array=($(nodels "$nodes_xcat"))
     if get_remote_cpu_info "${n_array[0]}"; then
         # 逐个更新所有节点的 slurm.conf 配置
         for node in "${n_array[@]}"; do

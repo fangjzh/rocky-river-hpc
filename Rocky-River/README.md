@@ -3,7 +3,7 @@
 - [x] （该问题已经解决，@ 2025年7月24日 ）注意，为安全起见，实际部署中请修改数据库root密码，默认是‘78g*tw23.ysq’（可以在安装前替换脚本中的密码，或者安装完成之后修改）。slurmdbd安装时添加了slurmdbd数据库用户，密码为‘slurmdbd1234’,修改此用户密码时/etc/slurm/slurmdbd.conf文件存储的密码也要修改（这个文件对普通用户是不可读写的）。 
 
 ## 简要使用步骤
-1. 准备一个32G+的优盘，下载ventoy，并将ventoy写入优盘。<br>
+1. 准备一个64G+的优盘，下载ventoy，并将ventoy写入优盘。<br>
 [ventoy 项目地址](https://www.ventoy.net/cn/index.html)
 优盘格式可设置为exFAT，便于存放大于4G的文件。
 注意，写优盘时设置一个额外的fat分区存放fuse-exfat的rpm安装包，否则安装完系统无法挂载exfat格式优盘。
