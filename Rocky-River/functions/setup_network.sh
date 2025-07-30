@@ -21,7 +21,7 @@ check_required_vars() {
 
 # 检查网络接口配置文件
 check_interface_config() {
-    local interface_config="/etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal}"
+    local interface_config="/etc/NetworkManager/system-connections/${sms_eth_internal}.nmconnection"
     
     log_info "检查网络接口配置文件"
     
@@ -30,7 +30,7 @@ check_interface_config() {
     fi
 }
 
-# 修复网卡名称配置
+# 修复网卡名称配置，rocky 9 已经修改配置文件位置和格式了，这里有待改进
 fix_interface_name() {
     local interface_config="/etc/sysconfig/network-scripts/ifcfg-${sms_eth_internal}"
     
@@ -121,7 +121,7 @@ setup_network() {
     load_env
     check_required_vars
     check_interface_config
-    fix_interface_name
+    ## fix_interface_name
     configure_interface
     activate_interface
     

@@ -23,6 +23,11 @@ check_required_vars() {
 install_ohpc_xcat() {
     log_info "安装 OHPC 基础包和 xCAT"
     
+    yum -y -q install initscripts >>.install_logs/${0##*/}.log 2>&1
+        if [ $? -ne 0 ]; then
+        log_error "安装 initscripts 失败"
+    fi
+
     yum -y -q install ohpc-base xCAT.x86_64 >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "安装 OHPC 和 xCAT 失败"
@@ -39,7 +44,7 @@ install_ohpc_xcat() {
 register_rocky_version() {
     local discinfo_file="/opt/xcat/lib/perl/xCAT/data/discinfo.pm"
     
-    log_info "注册 Rocky Linux 8.10 版本信息"
+    log_info "注册 Rocky Linux 版本信息"
     
     if [ ! -f "$discinfo_file" ]; then
         log_error "$discinfo_file 文件不存在"
@@ -53,6 +58,16 @@ register_rocky_version() {
     else
         log_info "Rocky Linux 8.10 版本信息已存在"
     fi
+
+    if ! grep -q 'rocky9.6' "$discinfo_file"; then
+        perl -pi -e 'print "    \"1748309243.9338255\" => \"rocky9.6\",      #x86_64\n" if $. == 17' "$discinfo_file"
+        if [ $? -ne 0 ]; then
+            log_error "注册 Rocky Linux 9.6 版本信息失败"
+        fi
+    else
+        log_info "Rocky Linux 9.6 版本信息已存在"
+    fi
+
 }
 
 # 配置 DHCP 接口

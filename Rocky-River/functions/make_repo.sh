@@ -28,7 +28,8 @@ create_directories() {
 # 禁用默认仓库
 disable_default_repos() {
     log_info "禁用默认的 Rocky 仓库"
-    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+    #perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky.repo
 }
 
 # 挂载 ISO 并复制内容
@@ -59,7 +60,7 @@ extract_packages() {
     
     local packages=(
         "${package_dir}/dep-packages.tar:/opt/repo/rocky"
-        "${package_dir}/kickstart-powertools.tar:/opt/repo/rocky"
+        "${package_dir}/kickstart-crb.tar:/opt/repo/rocky"
         "${package_dir}/openhpc.tar:/opt/repo"
         "${package_dir}/xcat.tar:/opt/repo"
     )
@@ -101,9 +102,9 @@ baseurl=file:///opt/repo/rocky/AppStream
 gpgcheck=0
 enabled=1
 
-[local-powertools]
+[local-crb]
 name=Rocky Linux \$releasever - local - PowerTools
-baseurl=file:///opt/repo/rocky/kickstart-powertools
+baseurl=file:///opt/repo/rocky/kickstart-crb
 gpgcheck=0
 enabled=1
 
@@ -126,10 +127,10 @@ create_additional_repos() {
         log_warn "/opt/repo/openhpc/make_repo.sh 不存在或不可执行"
     fi
     
-    if [ -x "/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh" ]; then
-        /opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh  >>.install_logs/${0##*/}.log 2>&1
+    if [ -x "/opt/repo/xcat/xcat-dep/rh9/x86_64/mklocalrepo.sh" ]; then
+        /opt/repo/xcat/xcat-dep/rh9/x86_64/mklocalrepo.sh  >>.install_logs/${0##*/}.log 2>&1
     else
-        log_warn "/opt/repo/xcat/xcat-dep/rh8/x86_64/mklocalrepo.sh 不存在或不可执行"
+        log_warn "/opt/repo/xcat/xcat-dep/rh9/x86_64/mklocalrepo.sh 不存在或不可执行"
     fi
     
     if [ -x "/opt/repo/xcat/xcat-core/mklocalrepo.sh" ]; then

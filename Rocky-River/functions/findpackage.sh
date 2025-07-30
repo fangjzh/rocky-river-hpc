@@ -47,7 +47,7 @@ findpackage() {
     iso_path=$(dirname "$iso_file_path")
 
     # 查找 dep-packages.tar
-    local package_file_path=$(find_file "dep-packages.tar")
+    local package_file_path=$(find_file "kickstart-crb.tar")
     if [ $? -ne 0 ]; then
         log_error "没有找到安装包文件 dep-packages.tar！请将文件放到 /root、/mnt、/media 或 /run/media 目录下！"
     fi
@@ -56,7 +56,7 @@ findpackage() {
     # 验证所有安装包是否存在
     local filelist=(
         dep-packages.tar
-        kickstart-powertools.tar
+        kickstart-crb.tar
         openhpc.tar
         xcat.tar
     )

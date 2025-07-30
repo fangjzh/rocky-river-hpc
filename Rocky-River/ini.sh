@@ -4,7 +4,8 @@
 # 路径 /opt/ohpc/pub/doc/recipes/rocky8 下，有input.local
 # /opt/ohpc/pub/doc/recipes/rocky8/x86_64/xcat/slurm/ 下有Install_guide.pdf  recipe.sh 可以作为参考
 
-iso_name="Rocky-8.10-x86_64-dvd1.iso"
+#iso_name="Rocky-8.10-x86_64-dvd1.iso"
+iso_name="Rocky-9.6-x86_64-dvd.iso"
 echo "计算节点系统镜像为 ${iso_name}"
 
 # 初始化日志目录
