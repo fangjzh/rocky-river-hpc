@@ -259,33 +259,11 @@ download_dependencies() {
     cat xcat-dep.list | xargs yum -y install --downloadonly --skip-broken
     cat ohpc.list | xargs yum -y install --downloadonly --skip-broken
     cat ohpc-updates.list | xargs yum -y install --downloadonly --skip-broken
+    yum -y install --downloadonly xCAT.x86_64
     
     cd ~  ## 返回主目录/root
     mkdir -p dep-packages
-    dir=$(find /var/cache/dnf/ -name 'epel*' -type d 2>/dev/null | head -n 1)
-    if [ -d "$dir/packages/" ]; then
-        cp -r "${dir}/packages/" dep-packages/
-    fi
-
-    dir=$(find /var/cache/dnf/ -name 'kickstart-baseos*' -type d 2>/dev/null | head -n 1)
-    if [ -d "$dir/packages/" ]; then
-        cp -r "${dir}/packages/" dep-packages/
-    fi
-
-    dir=$(find /var/cache/dnf/ -name 'kickstart-powertools*' -type d 2>/dev/null | head -n 1)
-    if [ -d "$dir/packages/" ]; then
-        cp -r "${dir}/packages/" dep-packages/
-    fi
-
-    dir=$(find /var/cache/dnf/ -name 'kickstart-appstream*' -type d 2>/dev/null | head -n 1)
-    if [ -d "$dir/packages/" ]; then
-        cp -r "${dir}/packages/" dep-packages/
-    fi
-
-    dir=$(find /var/cache/dnf/ -name 'shells_fish*' -type d 2>/dev/null | head -n 1)
-    if [ -d "$dir/packages/" ]; then
-        cp -r "${dir}/packages/" dep-packages/
-    fi
+    find  /var/cache/dnf -type d -name packages -exec cp -r {} dep-packages \;    
 
     createrepo dep-packages
     tar -cf dep-packages.tar dep-packages/
