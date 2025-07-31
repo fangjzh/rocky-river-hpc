@@ -29,7 +29,7 @@ create_directories() {
 disable_default_repos() {
     log_info "禁用默认的 Rocky 仓库"
     #perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
-    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky.repo
+    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky*.repo
 }
 
 # 挂载 ISO 并复制内容

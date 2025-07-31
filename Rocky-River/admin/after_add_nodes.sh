@@ -175,7 +175,7 @@ sync_munge_key() {
 
         # 使用 pdsh 作为备选方案
         pdsh -w "$nodes_xcat" mkdir -p /etc/munge
-        pdsh -w "$nodes_xcat" scp /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
+        pdcp -w "$nodes_xcat" /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
     fi
 }
 
@@ -210,6 +210,12 @@ synchronize_time() {
     else
         log_warn "chronyc 命令不存在，时间同步未执行"
     fi
+}
+
+# 计算节点安装freeIPA client
+install_freeipa_client() { 
+    log_info "安装freeIPA client"
+    pdsh -w "$nodes_xcat" "ipa-client-install --hostname=`hostname`  --mkhomedir  --server=${sms_name}.${domain_name}  --domain ${domain_name}  --force-join --principal=admin --password $ipa_admin_password --enable-dns-updates --force -U" >>${0##*/}.log 2>&1
 }
 
 # 重启节点服务
@@ -295,6 +301,7 @@ main() {
     sync_munge_key
     configure_intel_module
     synchronize_time
+    install_freeipa_client
     restart_node_services
     update_node_status
     cleanup_temp_files

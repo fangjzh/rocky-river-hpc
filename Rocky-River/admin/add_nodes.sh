@@ -244,7 +244,7 @@ create_node_definitions() {
             current_ip=${existing_ips[-1]}
         else
             log_info "没有现有节点 IP 列表"
-            current_ip="$c_ip_pre"
+            current_ip="$sms_ip"
         fi
 
         # 产生添加的节点 IP 列表 和 名称 列表
@@ -271,7 +271,7 @@ create_node_definitions() {
             current_ip=${valid_ips[0]}
         else
             log_info "没有现有节点 IP 列表"
-            current_ip="$c_ip_pre"
+            current_ip="$sms_ip"
         fi
 
         ## 生成节点名称列表
@@ -337,10 +337,15 @@ complete_network_services() {
         log_warn "执行 makedhcp 失败"
     fi
     
-    makedns -n >>${0##*/}.log 2>&1
+    # 更新 DNS 配置
+    # makedns -n >>${0##*/}.log 2>&1 ## 这个会全更新 named.conf 文件
+    # cat /var/named/db.${domain_name}.ipa.backup >> /var/named/db.${domain_name}
+    makedns "$new_node_name_xcat" >>${0##*/}.log 2>&1
+    # 这里只 makedns 也可以，它只依据/etc/hosts 文件更新内容，不会删除其他记录
     if [ $? -ne 0 ]; then
         log_warn "执行 makedns 失败"
     fi
+    systemctl restart named 
 }
 
 # 设置节点系统分发

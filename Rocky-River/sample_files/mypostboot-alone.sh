@@ -30,7 +30,8 @@ if [ $? != 0 ]; then
     exit
 fi
 
-sed -i "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+# sed -i "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
+perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky.repo
 ##sed -i "s/enabled=1/enabled=0/" /etc/yum.repos.d/local-*.repo
 
 # echo "

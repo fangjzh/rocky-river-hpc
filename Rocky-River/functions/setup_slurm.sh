@@ -23,7 +23,7 @@ check_required_vars() {
 install_slurm_packages() {
     log_info "安装 Slurm 及相关组件"
     
-    yum -y -q install mailx munge ohpc-slurm-server >>.install_logs/${0##*/}.log 2>&1
+    yum -y -q install munge ohpc-slurm-server >>.install_logs/${0##*/}.log 2>&1
     # 以后试试新版，可能有些许区别，比如日志文件配置文件位置等，以后再行测试调整 @ 2025年7月25日
     #yum -y -q install mailx munge slurm-ohpc slurm-slurmctld-ohpc slurm-slurmdbd-ohpc >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
@@ -105,9 +105,10 @@ configure_slurmdbd() {
     perl -pi -e "s/DbdHost=localhost/DbdHost=${sms_name}/" /etc/slurm/slurmdbd.conf
 
     # 添加日志文件
-    mkdir /var/log/slurm/
+    #mkdir /var/log/slurm/
     touch /var/log/slurm/slurmdbd.log
     chown -R slurm.slurm /var/log/slurm
+    #chown slurm.slurm /var/log/slurmctld.log
 }
 
 # 配置 slurmctld 服务
@@ -141,7 +142,7 @@ configure_slurmctld() {
     
     # 更新配置
     perl -pi -e "s/cjhpc/${sms_name}/" /etc/slurm/slurm.conf
-    perl -pi -e 's|^(\s*StateSaveLocation=)/var/spool/slurmctld|$1/var/spool/slurm/ctld|g' /etc/slurm/slurm.conf
+    #perl -pi -e 's|^(\s*StateSaveLocation=)/var/spool/slurmctld|$1/var/spool/slurm/ctld|g' /etc/slurm/slurm.conf
 
     # 添加日志文件
     touch /var/log/slurm_jobcomp.log

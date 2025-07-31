@@ -100,15 +100,17 @@ update_network_config() {
 delete_node_definition() {
     log_info "删除节点定义: $node_name"
     
+    makedns -d  "$node_name" >>${0##*/}.log 2>&1
+    if [ $? -ne 0 ]; then
+        log_warn "更新 DNS 配置失败"
+    fi
+
+    systemctl restart named
+
     # 从 xCAT 中删除节点定义
     rmdef -t node "$node_name" >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_warn "删除节点定义失败"
-    fi
-
-    makedns -n >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "更新 DNS 配置失败"
     fi
     
 }

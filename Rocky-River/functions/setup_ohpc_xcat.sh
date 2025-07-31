@@ -33,8 +33,16 @@ install_ohpc_xcat() {
         log_error "安装 OHPC 和 xCAT 失败"
     fi
     
-    # 启用 xCAT 工具
+    # 修复xCAT 在Rocky Linux 9.6 中的兼容性问题
+    # 参考 https://sourceforge.net/p/xcat/mailman/message/59205285/
+    sed -i 's/^authorityKeyIdentifier/#authorityKeyIdentifier/g'  /opt/xcat/share/xcat/ca/openssl.cnf.tmpl
+    perl -i -pe 's/(-key ca\/dockerhost-key\.pem -out cert\/dockerhost-req\.pem) -extensions server (-subj "\/CN=\$CNA")/$1 $2/' /opt/xcat/share/xcat/scripts/setup-dockerhost-cert.sh
+
+    ## 检查步骤是否已完成
     . /etc/profile.d/xcat.sh
+    ## 重新配置xcat
+    xcatconfig -i -c -s  >>.install_logs/${0##*/}.log 2>&1
+    lsxcatd -a  >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "加载 xCAT 环境变量失败"
     fi
@@ -74,10 +82,10 @@ register_rocky_version() {
 configure_dhcp() {
     log_info "配置 DHCP 接口"
     
-    chdef -t site dhcpinterfaces="xcatmn|${sms_eth_internal}"  >>.install_logs/${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "配置 DHCP 接口失败"
-    fi
+    #chdef -t site dhcpinterfaces="xcatmn|${sms_eth_internal}"  >>.install_logs/${0##*/}.log 2>&1
+    #if [ $? -ne 0 ]; then
+    #    log_warn "配置 DHCP 接口失败"
+    #fi
     
     chdef -t site domain=${domain_name}  >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
@@ -88,7 +96,11 @@ configure_dhcp() {
     if [ $? -ne 0 ]; then
         log_warn "重新配置 DHCP 接口失败"
     fi
-    
+
+    #删除初始数据,自动产生的ipv6信息有问题
+    tabprune networks -a  >>.install_logs/${0##*/}.log 2>&1 
+    # 添加网络配置 
+    chtab netname=internal_network networks.net=${c_ip_pre} networks.mask=$internal_netmask networks.gateway=$sms_ip networks.mgtifname=$sms_eth_internal networks.dhcpserver=$sms_ip networks.tftpserver=$sms_ip networks.nameservers=$sms_ip networks.ntpservers=$sms_ip
     makedhcp -n   >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "生成 DHCP 配置失败"
@@ -103,11 +115,13 @@ configure_ntp() {
     if [ $? -ne 0 ]; then
         log_warn "设置 NTP 服务器失败"
     fi
-    
-    makenetworks   >>.install_logs/${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "生成网络配置失败"
-    fi
+
+    makentp
+
+    #makenetworks   >>.install_logs/${0##*/}.log 2>&1
+    #if [ $? -ne 0 ]; then
+    #    log_warn "生成网络配置失败"
+    #fi
 }
 
 # 配置 root 密码
@@ -158,6 +172,7 @@ configure_postboot() {
     sed -i "s/10.0.0.1/${sms_ip}/" "$postboot_dst"
     sed -i "s/sms_name=cjhpc/sms_name=${sms_name}/" "$postboot_dst"
     sed -i "s/domain_name=local/domain_name=${domain_name}/" "$postboot_dst"
+    #sed -i "s/3Pknj7niorIYupjlq7e0ZtX/${ipa_admin_password}/" "$postboot_dst"
     
     chmod +x "$postboot_dst"
     if [ $? -ne 0 ]; then

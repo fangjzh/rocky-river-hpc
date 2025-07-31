@@ -239,18 +239,15 @@ reg_network() {
     echo "## 计算节点NTP时间服务器IP：" >>env.text
     echo "export ntp_server=${sms_ip}" >>env.text
     
-    # 设置内网子网域名
-    echo "## 内网子网域名：" >>env.text
-    echo "export domain_name=local" >>env.text
-    
     # 输入子网掩码
     input_netmask
     
     # 设置计算节点相关参数
     echo "## 计算节点名字前缀：" >>env.text
     echo "export compute_prefix=cnode" >>env.text
-    echo "## 计算节点IP网段：" >>env.text
-    echo "export c_ip_pre=${sms_ip}" >>env.text
+    echo "## 内网网络地址：" >>env.text
+    c_ip_pre=$(get_net_addr ${sms_ip}  ${internal_netmask})
+    echo "export c_ip_pre=${c_ip_pre}" >>env.text
     
     # 询问并配置IB网络（只有开头，后续需要对xcat 和 slurm 完成自动配置功能，还有相当多的事情要做）
     # configure_ib_network

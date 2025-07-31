@@ -9,18 +9,10 @@ iso_name="Rocky-9.6-x86_64-dvd.iso"
 echo "计算节点系统镜像为 ${iso_name}"
 
 # 初始化日志目录
-LOG_DIR="ins_logs"
 INSTALL_SCRIPT="Install.sh"
-ENV_FILE="env.text"
 
 # 清理旧的配置文件
-if [ -e "$ENV_FILE" ]; then
-    rm -f "$ENV_FILE"
-fi
-
-# 创建日志目录并清理旧日志
-mkdir -p "$LOG_DIR"
-mv *.sh.log "$LOG_DIR" 2>/dev/null
+echo -n "" > env.text
 
 # 日志函数
 log_info() {
@@ -56,7 +48,7 @@ check_function_files() {
         setup_monitor.sh
         setup_network.sh
         setup_nfs.sh
-        setup_nis.sh
+        setup_freeIPA.sh
         setup_ntp.sh
         setup_ohpc_xcat.sh
         setup_slurm.sh
@@ -89,21 +81,30 @@ generate_env_file() {
     ./functions/reg_network.sh
 
     # mysql root 密码
-    mysql_root_password=$(openssl rand -base64 12)
+    mysql_root_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     # 将密码写入环境变量文件
     echo "## MariaDB root 密码：" >>env.text
     echo "export mysql_root_pw=${mysql_root_password}" >>env.text
 
     # slurmdb 密码
-    slurmdb_password=$(openssl rand -base64 12)
+    slurmdb_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     echo "## SlurmDBD 密码：" >>env.text
     echo "export slurmdb_pw=${slurmdb_password}" >>env.text
 
     # xcat root 密码
-    xcat_root_password=$(openssl rand -base64 12)
+    xcat_root_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     # 将密码写入环境变量文件
     echo "## xCAT root 密码：" >>env.text
     echo "export xcat_root_pw=${xcat_root_password}" >>env.text
+
+    # FreeIPA 密码 --ds-password 12345678 --admin-password 12345678
+    ipa_ds_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
+    ipa_admin_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
+    echo "## FreeIPA 密码：" >>env.text
+    echo "export ipa_ds_password=${ipa_ds_password}" >>env.text
+    echo "export ipa_admin_password=${ipa_admin_password}" >>env.text
+
+
     log_info "MariaDB root / SlurmDBD / xCAT root 密码已生成"
 
     log_info "环境变量文件 env.text 生成完成"
@@ -193,7 +194,7 @@ run_step "setup_ntp" "./functions/setup_ntp.sh"
 run_step "setup_sql" "./functions/setup_sql.sh"
 run_step "setup_ohpc_xcat" "./functions/setup_ohpc_xcat.sh"
 run_step "setup_slurm" "./functions/setup_slurm.sh"
-run_step "setup_nis" "./functions/setup_nis.sh"
+run_step "setup_freeIPA" "./functions/setup_freeIPA.sh"
 run_step "setup_nfs" "./functions/setup_nfs.sh"
 run_step "setup_clustershell" "./functions/setup_clustershell.sh"
 run_step "setup_devtools" "./functions/setup_devtools.sh"

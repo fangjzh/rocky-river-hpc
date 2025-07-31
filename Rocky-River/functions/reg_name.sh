@@ -38,21 +38,25 @@ validate_cluster_name() {
 reg_name() {
     local cname=""
     
-    while true; do
-        echo "请输入集群名字，4-10个英文字符（只能包含字母、数字、下划线和连字符，且必须以字母开头）："
-        read cname
-        
-        if validate_cluster_name "$cname"; then
-            break
-        fi
-        
-        echo "请重新输入。"
-        echo
-    done
-    
-    log_info "你的集群名为：$cname"
-    echo "## 集群名：" >>env.text
+    #while true; do
+    #    echo "请输入集群名字，4-10个英文字符（只能包含字母、数字、下划线和连字符，且必须以字母开头）："
+    #    read cname
+    #    
+    #    if validate_cluster_name "$cname"; then
+    #        break
+    #    fi
+    #    
+    #    echo "请重新输入。"
+    #    echo
+    #done
+    cname="rrhead"
+    log_info "集群头节点名为：$cname"
+    echo "## 头节点名：" >>env.text
     echo "export sms_name=$cname" >>env.text
+    # 设置内网子网域名
+    echo "## 内网子网域名：" >>env.text
+    echo "export domain_name=rrhpc.local" >>env.text
+
 }
 
 # 执行主函数

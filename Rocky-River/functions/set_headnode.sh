@@ -31,6 +31,7 @@ setup_timezone() {
 
 # 设置主机名
 setup_hostname() {
+    #log_info "设置主机名为 ${sms_name}"
     log_info "设置主机名为 ${sms_name}"
     
     echo "${sms_name}" >/etc/hostname
@@ -39,7 +40,7 @@ setup_hostname() {
     fi
     
     # 添加主机名到 /etc/hosts
-    echo "${sms_ip}  ${sms_name}.${domain_name}  ${sms_name}" >>/etc/hosts
+    echo "${sms_ip} ${sms_name}.${domain_name} ${sms_name}" >>/etc/hosts
     if [ $? -ne 0 ]; then
         log_error "写入 /etc/hosts 失败"
     fi
@@ -77,7 +78,8 @@ disable_selinux() {
     
     # 永久禁用 SELinux
     if [ -f "/etc/sysconfig/selinux" ]; then
-        perl -pi -e "s/SELINUX=enforcing/SELINUX=disabled/" /etc/sysconfig/selinux
+        sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
+        sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/sysconfig/selinux
         if [ $? -ne 0 ]; then
             log_warn "永久禁用 SELinux 失败"
         fi
@@ -132,7 +134,7 @@ set_headnode() {
     setup_hostname
     disable_firewall
     disable_selinux
-    disable_ipv6
+    #disable_ipv6
     update_memlock_settings
     
     #log_info "执行 $0 : 头节点时区、hostname、防火墙设置完毕"
