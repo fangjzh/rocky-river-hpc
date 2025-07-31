@@ -105,6 +105,11 @@ configure_dhcp() {
     if [ $? -ne 0 ]; then
         log_error "生成 DHCP 配置失败"
     fi
+
+    makedns -n   >>.install_logs/${0##*/}.log 2>&1
+    if [ $? -ne 0 ]; then
+        log_error "生成 DNS 配置失败"
+    fi
 }
 
 # 配置 NTP 服务器
@@ -116,7 +121,7 @@ configure_ntp() {
         log_warn "设置 NTP 服务器失败"
     fi
 
-    makentp
+    makentp >>.install_logs/${0##*/}.log 2>&1
 
     #makenetworks   >>.install_logs/${0##*/}.log 2>&1
     #if [ $? -ne 0 ]; then

@@ -7,11 +7,15 @@
 
 2. 下载项目所需包(注意，该软件包不是本项目rocky river授权下的文件，以下提供的软件包为作者利用本项目代码进行相关软件打包作为测试使用，请勿直接用于商业项目)，给一个百度盘的地址 <br>
 **最新版本：**<br>
-with rocky linux 8.10 提取码: bdze  <br>
-链接: [https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ](https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ?pwd=bdze) <br>
-注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.10 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.10/isos/x86_64/Rocky-8.10-x86_64-dvd1.iso) <br>
+with rocky linux 9.6 提取码: xxxx  <br>
+链接: [https://pan.baidu.com/s/](https://pan.baidu.com/s/?pwd=xxxx) <br>
+注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 9.6 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/9.6/isos/x86_64/Rocky-9.6-x86_64-dvd.iso) <br>
 
 &emsp;&emsp;往期版本：<br>
+&emsp;&emsp;with rocky linux 8.10 提取码: bdze  <br>
+&emsp;&emsp;链接: [https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ](https://pan.baidu.com/s/1DOsfGQf5Al3chezwkvs8JQ?pwd=bdze) <br>
+&emsp;&emsp;注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.10 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.10/isos/x86_64/Rocky-8.10-x86_64-dvd1.iso) <br>
+
 &emsp;&emsp;with rocky linux 8.9 提取码 enmn <br>
 &emsp;&emsp;链接: [https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w](https://pan.baidu.com/s/1oYK-uvvs7l3DxvVEehLM-w?pwd=enmn) <br>
 &emsp;&emsp;注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 8.9 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/8.9/isos/x86_64/Rocky-8.9-x86_64-dvd1.iso) <br>

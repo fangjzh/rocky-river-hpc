@@ -1,4 +1,6 @@
 #!/bin/sh
+# 这是一个过时的版本，仅作为参考
+#
 
 export node_ip=10.0.0.103
 export node_name=cnode03

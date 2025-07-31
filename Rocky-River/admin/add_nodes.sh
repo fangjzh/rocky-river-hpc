@@ -228,6 +228,9 @@ get_next_ip() {
 # 创建新节点定义
 create_node_definitions() {
     log_info "创建新节点定义"
+
+    # 关闭 SELinux
+    setenforce 0
     
     local nodename_start_number=$(get_current_node_numbers)
     local current_ip
@@ -338,8 +341,10 @@ complete_network_services() {
     fi
     
     # 更新 DNS 配置
+    # . /etc/profile.d/xcat.sh
+    # source env.text
     # makedns -n >>${0##*/}.log 2>&1 ## 这个会全更新 named.conf 文件
-    # cat /var/named/db.${domain_name}.ipa.backup >> /var/named/db.${domain_name}
+    # cat db.ipa.backup >> /var/named/db.${domain_name}
     makedns "$new_node_name_xcat" >>${0##*/}.log 2>&1
     # 这里只 makedns 也可以，它只依据/etc/hosts 文件更新内容，不会删除其他记录
     if [ $? -ne 0 ]; then

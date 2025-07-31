@@ -60,13 +60,13 @@ install_freeipa() {
 #EOF
 
     cat /tmp/ipa.system.records.*.db >> /var/named/db.${domain_name}
-    cat /tmp/ipa.system.records.*.db >> /var/named/db.${domain_name}.ipa.backup
+    cat /tmp/ipa.system.records.*.db >> db.ipa.backup
     echo "" >> /var/named/db.${domain_name} # 必须有个空行？
 
     systemctl restart named 
 
     ##  auto mk home dir
-    authconfig --enablemkhomedir --update
+    # authconfig --enablemkhomedir --update
 }
  
 
