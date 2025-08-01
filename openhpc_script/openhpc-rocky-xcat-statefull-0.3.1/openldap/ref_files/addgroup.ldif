@@ -1,7 +1,0 @@
-dn: cn=testuser,ou=Group,dc=cjhpc,dc=local
-objectClass: posixGroup
-objectClass: top
-cn: testuser
-userPassword: {crypt}!!
-gidNumber: 1002
-
