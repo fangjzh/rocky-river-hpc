@@ -53,7 +53,7 @@ add_user() {
 
 # 生成随机密码
 generate_random_password() {
-    password=$(openssl rand -base64 12)
+    password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     echo "$password"
 }
 

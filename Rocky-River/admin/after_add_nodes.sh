@@ -171,11 +171,7 @@ sync_munge_key() {
     # 使用 xCAT 的 xdcp 命令同步
     xdcp "$nodes_xcat" /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
-        log_warn "使用 xdcp 同步 munge.key 失败，尝试使用 pdsh"
-
-        # 使用 pdsh 作为备选方案
-        pdsh -w "$nodes_xcat" mkdir -p /etc/munge
-        pdsh -w "$nodes_xcat" scp /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
+        log_error "使用 xdcp 同步 munge.key 失败!!!"
     fi
 }
 

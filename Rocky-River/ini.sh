@@ -88,18 +88,18 @@ generate_env_file() {
     ./functions/reg_network.sh
 
     # mysql root 密码
-    mysql_root_password=$(openssl rand -base64 12)
+    mysql_root_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     # 将密码写入环境变量文件
     echo "## MariaDB root 密码：" >>env.text
     echo "export mysql_root_pw=${mysql_root_password}" >>env.text
 
     # slurmdb 密码
-    slurmdb_password=$(openssl rand -base64 12)
+    slurmdb_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     echo "## SlurmDBD 密码：" >>env.text
     echo "export slurmdb_pw=${slurmdb_password}" >>env.text
 
     # xcat root 密码
-    xcat_root_password=$(openssl rand -base64 12)
+    xcat_root_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     # 将密码写入环境变量文件
     echo "## xCAT root 密码：" >>env.text
     echo "export xcat_root_pw=${xcat_root_password}" >>env.text

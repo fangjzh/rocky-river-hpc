@@ -46,7 +46,6 @@ Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理
 ### To do list
 - [ ] 自定义共享目录
 - [ ] 完善用户添加脚本
-- [ ] 自定义数据库密码，这个有点重要！！
 - [ ] 各项服务的检测与修复脚本
 - [ ] 提供slurm基本使用手册，用户限额配置，GPU调度等
 - [ ] InfiniBand等硬件的支持
@@ -64,6 +63,6 @@ Rocky River HPC Toolkit 是一个基于OpenHPC和XCAT的HPC集群搭建和管理
 - [x] 决定了，名字叫“岩川”，英文名叫Rocky River。
 - [x] 给项目取个名字，建立一个新的二级目录
 - [x] 得整一个license
-
+- [x] 自定义数据库密码，这个有点重要！！
 ### bug
 - [x] addnode部分，数量超过8和就有问题。似乎是数量函数哪里有点格式问题，这是shell脚本8进制问题，现在已经解决
