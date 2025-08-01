@@ -141,7 +141,6 @@ configure_freeipa_client() {
     #ipa-client-install --server=ipa.example.com --domain=example.com --realm=EXAMPLE.COM --principal=admin --password=YourAdminPassword --force-join --mkhomedir --no-ntp --enable-dns-updates --force
     # 这里的密码是用来替换的
     #ipa-client-install --hostname=${host_name}.${domain_name}  --mkhomedir  --server=${sms_name}.${domain_name}  --domain ${domain_name}  --force-join --realm ${ream_name} --principal=admin --password 3Pknj7niorIYupjlq7e0ZtX --enable-dns-updates --force -U
-    
 
 }
 

@@ -55,6 +55,10 @@ EOF
         exit 1
     fi
       
+    # 更新一下缓存
+    realm_name=$(echo ${domain_name} | tr 'a-z' 'A-Z')
+    id $USERNAME@${realm_name}
+
     # 将密码写入环境变量文件
     echo "## 用户 $USERNAME 的密码：" >>env.user
     echo "export user_${USERNAME}_pw=${INITIAL_PASSWORD}" >>env.user
@@ -67,7 +71,10 @@ EOF
 create_home_dir() {
     # 创建家目录
     HOME_DIR="/home/$USERNAME"
-    mkdir -p "$HOME_DIR"
+
+    if [ ! -d "$HOME_DIR" ]; then
+        mkdir -p "$HOME_DIR"
+    fi
 
     USER_INFO=$(ipa user-show "$USERNAME" | grep -E 'UID|GID')
     xUID=$(echo "$USER_INFO" | grep 'UID' | awk '{print $2}')

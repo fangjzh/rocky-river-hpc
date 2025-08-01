@@ -30,10 +30,13 @@ install_freeipa() {
         log_error "安装 FreeIPA 失败"
     fi
     #ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} -r ${domain_name^^} -p secret12 -n ${domain_name} -U --ds-password 12345678 --admin-password 12345678 >>.install_logs/${0##*/}.log 2>&1
-    ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} -r ${domain_name} -p secret12 -n ${domain_name} -U --ds-password ${ipa_ds_password} --admin-password ${ipa_admin_password} >>.install_logs/${0##*/}.log 2>&1
+    realm_name=$(echo ${domain_name} | tr 'a-z' 'A-Z')
+    ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} --realm=${realm_name} --mkhomedir -r ${domain_name} -p secret12 -n ${domain_name} -U --ds-password ${ipa_ds_password} --admin-password ${ipa_admin_password} >>.install_logs/${0##*/}.log 2>&1
     
     # 添加 SRV 记录
     # 参考 https://docs.redhat.com/zh-cn/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/installing-an-ipa-server-without-integrated-dns_installing-identity-management
+
+    ## 这里xcat 会搞定
 #    cat << EOF >> /etc/named.conf
 ## 添加你自己的主区域
 #zone "${domain_name}" IN {
@@ -67,6 +70,12 @@ install_freeipa() {
 
     ##  auto mk home dir
     # authconfig --enablemkhomedir --update
+
+    # 将root用户加入ipa管理员
+    echo "${ipa_admin_password}" | kinit admin  >>.install_logs/${0##*/}.log 2>&1
+    # 测试
+    klist  >>.install_logs/${0##*/}.log 2>&1
+
 }
  
 

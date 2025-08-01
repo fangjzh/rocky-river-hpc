@@ -12,13 +12,19 @@ fi
 check_prerequisites() {
     log_info "检查前置条件"
 
-    if [ ! -e new_install.nodes ]; then
-        log_error "new_install.nodes 文件不存在，请先执行 add_computenode.sh 添加节点"
+    # 如果 $1 不为空，直接传入节点列表，用于重装计算节点后的工作
+    if [ -n "$1" ]; then
+        renode_name="$1"
+    else
+        if [ ! -e new_install.nodes ]; then
+            log_error "new_install.nodes 文件不存在，请先执行 add_computenode.sh 添加节点"
+        fi
+
+        if ! command -v pdsh >/dev/null 2>&1; then
+            log_error "pdsh 命令未找到，请确保已安装并配置 xCAT 环境"
+        fi
     fi
 
-    if ! command -v pdsh >/dev/null 2>&1; then
-        log_error "pdsh 命令未找到，请确保已安装并配置 xCAT 环境"
-    fi
 }
 
 # 加载 xCAT 环境
@@ -36,8 +42,13 @@ load_xcat_env() {
 get_node_info() {
     log_info "获取节点信息"
 
-    # 读取新安装的节点信息
-    read -r nodes_xcat <<< "$(cat new_install.nodes)"
+    if [ -n "$renode_name" ]; then
+        log_info "正在重建节点 $renode_name"
+        nodes_xcat=$renode_name
+    else
+        # 读取新安装的节点信息
+        read -r nodes_xcat <<< "$(cat new_install.nodes)"
+    fi
 
     if [ -z "$nodes_xcat" ] ; then
         log_error "new_install.nodes 文件格式不正确或为空"
@@ -215,7 +226,8 @@ synchronize_time() {
 # 计算节点安装freeIPA client
 install_freeipa_client() { 
     log_info "安装freeIPA client"
-    pdsh -w "$nodes_xcat" "ipa-client-install --hostname=`hostname`  --mkhomedir  --server=${sms_name}.${domain_name}  --domain ${domain_name}  --force-join --principal=admin --password $ipa_admin_password --enable-dns-updates --force -U" >>${0##*/}.log 2>&1
+    realm_name=$(echo ${domain_name} | tr 'a-z' 'A-Z')
+    pdsh -w "$nodes_xcat" "ipa-client-install --hostname=\`hostname\`.${domain_name}  --mkhomedir  --server=${sms_name}.${domain_name}  --domain=${domain_name} --realm=${realm_name} --force-join --principal=admin --password $ipa_admin_password --enable-dns-updates --force -U" >>${0##*/}.log 2>&1
 }
 
 # 重启节点服务
@@ -282,7 +294,7 @@ main() {
 
     load_env
     load_xcat_env
-    check_prerequisites
+    check_prerequisites $1
     get_node_info
     check_node_status
 
@@ -311,4 +323,4 @@ main() {
 }
 
 # 执行主函数
-main
+main $1

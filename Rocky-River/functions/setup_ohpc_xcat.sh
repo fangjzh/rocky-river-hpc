@@ -121,7 +121,7 @@ configure_ntp() {
         log_warn "设置 NTP 服务器失败"
     fi
 
-    makentp >>.install_logs/${0##*/}.log 2>&1
+   #  makentp >>.install_logs/${0##*/}.log 2>&1
 
     #makenetworks   >>.install_logs/${0##*/}.log 2>&1
     #if [ $? -ne 0 ]; then
