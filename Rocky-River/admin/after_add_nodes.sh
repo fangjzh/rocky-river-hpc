@@ -182,11 +182,7 @@ sync_munge_key() {
     # 使用 xCAT 的 xdcp 命令同步
     xdcp "$nodes_xcat" /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
-        log_warn "使用 xdcp 同步 munge.key 失败，尝试使用 pdsh"
-
-        # 使用 pdsh 作为备选方案
-        pdsh -w "$nodes_xcat" mkdir -p /etc/munge
-        pdcp -w "$nodes_xcat" /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
+        log_error "使用 xdcp 同步 munge.key 失败!!"
     fi
 }
 
@@ -253,7 +249,7 @@ update_node_status() {
     log_info "更新节点状态"
 
     if [ -x "/usr/bin/scontrol" ]; then
-        scontrol update "NodeName=$nodes_xcat" State=RESUME >>${0##*/}.log 2>&1
+        scontrol update NodeName="$nodes_xcat" State=RESUME >>${0##*/}.log 2>&1
         if [ $? -ne 0 ]; then
             log_warn "更新节点状态失败"
         fi
