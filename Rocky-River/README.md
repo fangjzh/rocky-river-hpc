@@ -7,8 +7,8 @@
 
 2. 下载项目所需包(注意，该软件包不是本项目rocky river授权下的文件，以下提供的软件包为作者利用本项目代码进行相关软件打包作为测试使用，请勿直接用于商业项目)，给一个百度盘的地址 <br>
 **最新版本：**<br>
-with rocky linux 9.6 提取码: xxxx  <br>
-链接: [https://pan.baidu.com/s/](https://pan.baidu.com/s/?pwd=xxxx) <br>
+with rocky linux 9.6 （xcat or confluent）提取码: 请联系作者  <br>
+链接: [请联系作者](https://pan.baidu.com/s/?pwd=xxxx) <br>
 注：其中的Rocky Linux系统镜像是从官网直接下的，可从其镜像站下载rocky linux 9.6 iso：[下载链接](https://mirror.sjtu.edu.cn/rocky/9.6/isos/x86_64/Rocky-9.6-x86_64-dvd.iso) <br>
 
 &emsp;&emsp;往期版本：<br>
