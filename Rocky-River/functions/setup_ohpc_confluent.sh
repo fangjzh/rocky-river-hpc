@@ -49,6 +49,7 @@ install_ohpc_confluent() {
     cp /var/lib/ipa/private/httpd.key /var/lib/ipa/private/httpd.key.bak
     cp /var/lib/ipa/certs/httpd.crt /var/lib/ipa/certs/httpd.crt.bak
     # 创建密钥，用以给confluent 创建简单证书
+    mkdir -p /etc/confluent/tls
     openssl pkcs12 -in /root/cacert.p12 -nodes -nocerts -passin pass:${ipa_ds_password} -out /etc/confluent/tls/cakey.pem
     chown confluent:root /etc/confluent/tls/cakey.pem 
     cp /etc/confluent/tls/cacert.pem{,.bak}

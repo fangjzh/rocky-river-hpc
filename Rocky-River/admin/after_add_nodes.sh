@@ -73,6 +73,9 @@ check_node_status() {
         for node in "${nodes_array[@]}"; do
             # 首先检查SSH连接是否可用
             log_info "Checking SSH connection to $node..."
+            if ! ssh-keygen -F "$node" -f ~/.ssh/known_hosts >/dev/null; then
+                ssh-keyscan -H "$node" >> ~/.ssh/known_hosts
+            fi
             if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$node" exit 2>/dev/null; then
                 all_ready=false
                 unready_nodes="$unready_nodes $node"
