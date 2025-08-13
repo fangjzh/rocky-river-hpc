@@ -64,7 +64,7 @@ configure_exports() {
 # 应用 NFS 配置
 apply_nfs_configuration() {
     log_info "应用 NFS 配置"
-    
+    sleep 5
     exportfs -a >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "应用 NFS 导出配置失败"
@@ -94,6 +94,7 @@ setup_nfs() {
     load_env
     check_required_directories
     configure_exports
+    start_nfs_services
     apply_nfs_configuration
     start_nfs_services
     

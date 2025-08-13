@@ -21,16 +21,6 @@ check_prerequisites() {
     fi
 }
 
-# 加载 xCAT 环境
-load_xcat_env() {
-    log_info "加载 xCAT 环境"
-
-    if [ -f "/etc/profile.d/xcat.sh" ]; then
-        . /etc/profile.d/xcat.sh
-    else
-        log_error "/etc/profile.d/xcat.sh 文件不存在"
-    fi
-}
 
 # 检查参数
 check_arguments() {
@@ -51,12 +41,12 @@ check_arguments() {
     
     node_name="$1"
     echo "将要重装以下节点："
-    nodels $node_name
+    nodelist $node_name
     if [ $? -ne 0 ]; then
         log_error "节点 $node_name 不存在"
         exit 1
     fi
-    nodelist=$(nodels $node_name)
+    nodelist=$(nodelist $node_name)
 
 }
 
@@ -73,20 +63,17 @@ confirm_node_reinstall() {
 
 # 重装节点
 reinstall_node() { 
-    image_list=($(lsdef -t osimage | grep install | grep compute))
-    if [ -z "${image_list[0]}" ]; then
-        log_error "未找到可用的 osimage"
-    fi
-    image_choose="${image_list[0]}"
-    nodeset $node_name $image_choose
+    local default_deploy_config=$(osdeploy list| grep default | sed 's/ //g')
+    local mydefinition_config=${default_deploy_config/default/mydefinition}
     # 其他设置：
+    nodedeploy -n $node_name -p ${mydefinition_config}
 }
 
 main() {
     log_info "开始重装节点 $node_name"
 
     check_prerequisites
-    load_xcat_env
+
 
     check_arguments
 

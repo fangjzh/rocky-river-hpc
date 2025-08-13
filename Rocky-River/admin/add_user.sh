@@ -56,7 +56,7 @@ EOF
     fi
       
     # 更新一下缓存
-    realm_name=$(echo ${domain_name} | tr 'a-z' 'A-Z')
+    realm_name=$(echo "${domain_name}" | tr 'a-z' 'A-Z')
     id $USERNAME@${realm_name}
 
     # 将密码写入环境变量文件

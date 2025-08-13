@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 加载公共函数
 if [ -f "./functions/common_functions.sh" ]; then
@@ -47,7 +47,7 @@ findpackage() {
     iso_path=$(dirname "$iso_file_path")
 
     # 查找 dep-packages.tar
-    local package_file_path=$(find_file "kickstart-crb.tar")
+    local package_file_path=$(find_file "confluent.tar")
     if [ $? -ne 0 ]; then
         log_error "没有找到安装包文件 dep-packages.tar！请将文件放到 /root、/mnt、/media 或 /run/media 目录下！"
     fi
@@ -59,6 +59,7 @@ findpackage() {
         kickstart-crb.tar
         openhpc.tar
         xcat.tar
+        confluent.tar
     )
 
     for ifile in "${filelist[@]}"; do

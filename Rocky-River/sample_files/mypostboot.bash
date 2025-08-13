@@ -16,18 +16,22 @@ log_error() {
 
 # 禁用默认仓库
 disable_default_repos() {
+    
     log_info "禁用默认仓库"
     
     #perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/Rocky-*.repo
-    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky*.repo
-    perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/local-*.repo
+    #perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/rocky*.repo
+    #perl -pi -e "s/enabled=1/enabled=0/" /etc/yum.repos.d/local-*.repo
+    sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/rocky*.repo
+    sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/local-*.repo
 }
 
 # 配置计算节点仓库
 configure_compute_repo() {
     log_info "配置计算节点仓库"
-    
-    wget -O /etc/yum.repos.d/compute_node.repo http://${sms_ip}:80//opt/repo/compute_node.repo
+    #yum install -y -q wget
+    curl -o /etc/yum.repos.d/compute_node.repo "http://${sms_ip}:80//opt/repo/compute_node.repo"
+    #wget -O /etc/yum.repos.d/compute_node.repo http://${sms_ip}:80//opt/repo/compute_node.repo
     if [ $? -ne 0 ]; then
         log_error "下载计算节点仓库配置失败"
     fi
@@ -56,6 +60,7 @@ configure_dns() {
 install_compute_packages() {
     log_info "安装计算节点软件包"
     
+    yum install -y -q perl
     yum -y -q install ohpc-base-compute.x86_64 lmod-ohpc munge ohpc-slurm-client
     if [ $? -ne 0 ]; then
         log_error "安装计算节点软件包失败"

@@ -25,16 +25,6 @@ check_required_vars() {
     done
 }
 
-# 加载 xCAT 环境
-load_xcat_env() {
-    log_info "加载 xCAT 环境"
-    
-    if [ -f "/etc/profile.d/xcat.sh" ]; then
-        . /etc/profile.d/xcat.sh
-    else
-        log_error "/etc/profile.d/xcat.sh 文件不存在"
-    fi
-}
 
 
 # 检查参数
@@ -56,12 +46,12 @@ check_arguments() {
     
     node_name="$1"
     echo "将要删除以下节点："
-    nodels $node_name
+    nodelist $node_name
     if [ $? -ne 0 ]; then
         log_error "节点 $node_name 不存在"
         exit 1
     fi
-    nodelist=$(nodels $node_name)
+    nodelist=$(nodelist $node_name)
 
 }
 
@@ -77,38 +67,20 @@ confirm_node_deletion() {
 }
 
 
-# 更新网络配置
-update_network_config() {
-    log_info "更新网络配置"
-    
-    # 删除主机和 DHCP 配置
-    makehosts -d "$node_name" >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "删除主机配置失败"
-    fi
-    
-    makedhcp -d "$node_name" >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "删除 DHCP 配置失败"
-    fi
-    
-    # 重启 DHCP 服务
-    systemctl restart dhcpd
-}
-
 # 删除节点定义
 delete_node_definition() {
     log_info "删除节点定义: $node_name"
     
-    makedns -d  "$node_name" >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "更新 DNS 配置失败"
-    fi
+    #从/etc/hosts文件中删除节点定义
+    for node in "${to_delete_nodes[@]}"; do
+        # 使用 sed 删除包含节点名称的行（原地修改文件）
+        sed -i "/$node\ /d" /etc/hosts
+    done
 
     systemctl restart named
 
-    # 从 xCAT 中删除节点定义
-    rmdef -t node "$node_name" >>${0##*/}.log 2>&1
+    # 从 confluent 中删除节点定义
+    noderemove "$node_name" >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_warn "删除节点定义失败"
     fi
@@ -175,7 +147,7 @@ update_clustershell_config() {
     log_info "更新 ClusterShell 配置"
     
     if [ -f "/etc/clustershell/groups.d/local.cfg" ]; then
-    local allnode_list=($(nodels))
+    local allnode_list=($(nodelist))
     local allnode_list_collapse=$(collapse_slurm_node_list "${allnode_list[@]}")
     perl -ni -e "if(/^compute/){print \"compute: ${allnode_list_collapse}\n\"}else{print}" /etc/clustershell/groups.d/local.cfg
         if [ $? -ne 0 ]; then
@@ -191,15 +163,14 @@ main() {
     log_info "开始执行 $0 : 删除计算节点"
     echo "$0 执行开始！" >${0##*/}.log
     
-    load_xcat_env
+
     load_env
     check_required_vars
     check_arguments "$@"
     confirm_node_deletion
 
-    to_delete_nodes=($(nodels $@))
+    to_delete_nodes=($(nodelist $@))
 
-    update_network_config
     delete_node_definition
 
 

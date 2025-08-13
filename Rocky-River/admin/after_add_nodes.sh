@@ -27,16 +27,7 @@ check_prerequisites() {
 
 }
 
-# 加载 xCAT 环境
-load_xcat_env() {
-    log_info "加载 xCAT 环境"
 
-    if [ -f "/etc/profile.d/xcat.sh" ]; then
-        . /etc/profile.d/xcat.sh
-    else
-        log_error "/etc/profile.d/xcat.sh 文件不存在"
-    fi
-}
 
 # 获取节点信息
 get_node_info() {
@@ -62,9 +53,9 @@ get_node_info() {
 check_node_status() {
     log_info "检测节点状态"
 
-    local nodes_array=($(nodels "$nodes_xcat"))
+    local nodes_array=($(nodelist "$nodes_xcat"))
 
-    # 如果nodes_array为空，则执行nodels命令
+    # 如果nodes_array为空，则执行nodelist命令
     if [ "${#nodes_array[@]}" -eq 0 ]; then
         log_error "未找到节点"
     fi
@@ -179,8 +170,8 @@ sync_munge_key() {
         log_error "/etc/munge/munge.key 文件不存在"
     fi
 
-    # 使用 xCAT 的 xdcp 命令同步
-    xdcp "$nodes_xcat" /etc/munge/munge.key /etc/munge/munge.key >>${0##*/}.log 2>&1
+    # 使用 confluent 命令同步
+    nodersync  /etc/munge/munge.key "$nodes_xcat":/etc/munge/munge.key >>${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "使用 xdcp 同步 munge.key 失败!!"
     fi
@@ -289,14 +280,14 @@ main() {
     echo "$0 执行开始！" >${0##*/}.log
 
     load_env
-    load_xcat_env
+
     check_prerequisites $1
     get_node_info
     check_node_status
 
     ## 依据计算节点硬件更新头节点的slurm 配置文件
     # 访问特定元素 (例如，第一个元素)
-    n_array=($(nodels "$nodes_xcat"))
+    n_array=($(nodelist "$nodes_xcat"))
     if get_remote_cpu_info "${n_array[0]}"; then
         # 逐个更新所有节点的 slurm.conf 配置
         for node in "${n_array[@]}"; do

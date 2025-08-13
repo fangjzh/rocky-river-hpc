@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 加载公共函数
 if [ -f "./functions/common_functions.sh" ]; then
@@ -63,6 +63,7 @@ extract_packages() {
         "${package_dir}/kickstart-crb.tar:/opt/repo/rocky"
         "${package_dir}/openhpc.tar:/opt/repo"
         "${package_dir}/xcat.tar:/opt/repo"
+        "${package_dir}/confluent.tar:/opt/repo"
     )
     
     for pkg in "${packages[@]}"; do
@@ -117,7 +118,7 @@ enabled=1
 EOF
 }
 
-# 创建 OpenHPC 和 xCAT 仓库
+# 创建 OpenHPC 和 xCAT 以及 confluent 仓库
 create_additional_repos() {
     log_info "创建 OpenHPC 和 xCAT 仓库"
     
@@ -138,6 +139,14 @@ create_additional_repos() {
     else
         log_warn "/opt/repo/xcat/xcat-core/mklocalrepo.sh 不存在或不可执行"
     fi
+
+    if [ -x "/opt/repo/lenovo-hpc-el9/mklocalrepo.sh" ]; then
+        sed -i 's/gpgcheck=1/gpgcheck=0/g' /opt/repo/lenovo-hpc-el9/localrepo.tmpl
+        /opt/repo/lenovo-hpc-el9/mklocalrepo.sh   >>.install_logs/${0##*/}.log 2>&1
+    else
+        log_warn "/opt/repo/confluent_repo/mklocalrepo.sh 不存在或不可执行"
+    fi
+
 }
 
 # 更新 yum 缓存
@@ -203,6 +212,13 @@ create_compute_node_repo() {
         sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/xcat-dep.repo >> "$repo_file"
         echo "" >> "$repo_file"
     fi
+
+    # 添加 confluent 仓库配置
+    if [ -f /etc/yum.repos.d/lenovo-hpc.repo ]; then
+        sed 's/file:\//http:\/\/'"${sms_ip}"':80/' /etc/yum.repos.d/lenovo-hpc.repo >> "$repo_file"
+        echo "" >> "$repo_file"
+    fi
+    
 }
 
 # 主函数

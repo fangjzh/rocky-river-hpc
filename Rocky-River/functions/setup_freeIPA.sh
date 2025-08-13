@@ -25,52 +25,18 @@ check_required_vars() {
 install_freeipa() { 
     # dnf module enable idm:DL1  -y >>.install_logs/${0##*/}.log 2>&1  # Rock Linux 9 没有这个idm了
     # dnf install ipa-server ipa-server-dns -y  # 目前DNS由xcat管理
-    dnf install ipa-server -y >>.install_logs/${0##*/}.log 2>&1
+    dnf install ipa-server ipa-server-dns bind-dyndb-ldap  -y >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
         log_error "安装 FreeIPA 失败"
     fi
     #ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} -r ${domain_name^^} -p secret12 -n ${domain_name} -U --ds-password 12345678 --admin-password 12345678 >>.install_logs/${0##*/}.log 2>&1
     realm_name=$(echo ${domain_name} | tr 'a-z' 'A-Z')
-    ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} --realm=${realm_name} --mkhomedir -r ${domain_name} -p secret12 -n ${domain_name} -U --ds-password ${ipa_ds_password} --admin-password ${ipa_admin_password} >>.install_logs/${0##*/}.log 2>&1
+    ipa-server-install -a secret12 --hostname=${sms_name}.${domain_name} --realm=${realm_name} --mkhomedir -r ${domain_name} -p secret12 -n ${domain_name} -U --ds-password ${ipa_ds_password} --admin-password ${ipa_admin_password} --setup-dns --no-ntp --no-forwarders >>.install_logs/${0##*/}.log 2>&1
     
-    # 添加 SRV 记录
-    # 参考 https://docs.redhat.com/zh-cn/documentation/red_hat_enterprise_linux/8/html/installing_identity_management/installing-an-ipa-server-without-integrated-dns_installing-identity-management
-
-    ## 这里xcat 会搞定
-#    cat << EOF >> /etc/named.conf
-## 添加你自己的主区域
-#zone "${domain_name}" IN {
-#    type master;               # 这是一个主区域
-#    file "${domain_name}.zone"; # 区域文件的名称
-#    allow-update { none; };    # 禁止动态更新
-#};
-#EOF
-
-#    cat << EOF > /var/named/${domain_name}.zone
-#\$ORIGIN ${domain_name}.
-#\$TTL 86400  ; 默认 TTL，1 天
-#
-#@ IN SOA ${sms_name}.${domain_name}. root.${domain_name}. (
-#                 2025073101 ; Serial (YYYYMMDDNN)
-#                 3H         ; Refresh
-#                 1H         ; Retry
-#                 1W         ; Expire
-#                 1D )       ; Minimum TTL
-#
-#@ IN NS ${sms_name}.${domain_name}. ; 你的主 DNS 服务器 (FreeIPA 服务器)
-#${sms_name} IN A ${sms_ip}       ; 为 NS 记录添加对应的 A 记录
-#
-#EOF
-
-    cat /tmp/ipa.system.records.*.db >> /var/named/db.${domain_name}
-    cat /tmp/ipa.system.records.*.db >> db.ipa.backup
-    echo "" >> /var/named/db.${domain_name} # 必须有个空行？
-
-    systemctl restart named 
-
-    ##  auto mk home dir
-    # authconfig --enablemkhomedir --update
-
+    if [ $? -ne 0 ]; then
+        log_error "安装 FreeIPA 失败"
+    fi
+    
     # 将root用户加入ipa管理员
     echo "${ipa_admin_password}" | kinit admin  >>.install_logs/${0##*/}.log 2>&1
     # 测试

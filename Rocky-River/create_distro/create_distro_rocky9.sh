@@ -3,8 +3,9 @@
 # 全局变量
 rocky_re="9.6"
 openhpc_re="3.3"
-openhpc_update_re="3.x.x"  ## 有待完善 @ 2025年7月25日
+#openhpc_update_re="3.x.x"  ## 有待完善 @ 2025年7月25日
 xcat_re="2.17.0"
+confluent_re="el9"
 
 ## 使用代理下载(OHPC和xCAT)
 PROXY_ENABLED="off"  ## on or off 
@@ -106,25 +107,47 @@ configure_yum_repos() {
     fi
 
     log "Configuring YUM repositories..."
+    # 阿里云源
+#     cat <<EOF > /etc/yum.repos.d/Rocky-kickstart.repo
+# [kickstart-baseos]
+# name=Rocky Linux \$releasever - kickstart - BaseOS
+# baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/BaseOS/\$basearch/kickstart/
+# gpgcheck=0
+# enabled=1
+# 
+# [kickstart-appstream]
+# name=Rocky Linux \$releasever - kickstart - AppStream
+# baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/AppStream/\$basearch/kickstart/
+# gpgcheck=0
+# enabled=1
+# 
+# [kickstart-crb]
+# name=Rocky Linux \$releasever - kickstart - CRB
+# baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/CRB/\$basearch/kickstart/
+# gpgcheck=0
+# enabled=1
+# EOF
+
     cat <<EOF > /etc/yum.repos.d/Rocky-kickstart.repo
 [kickstart-baseos]
 name=Rocky Linux \$releasever - kickstart - BaseOS
-baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/BaseOS/\$basearch/kickstart/
+baseurl=https://mirror.nju.edu.cn/rocky/\$releasever/BaseOS/\$basearch/kickstart/
 gpgcheck=0
 enabled=1
 
 [kickstart-appstream]
 name=Rocky Linux \$releasever - kickstart - AppStream
-baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/AppStream/\$basearch/kickstart/
+baseurl=https://mirror.nju.edu.cn/rocky/\$releasever/AppStream/\$basearch/kickstart/
 gpgcheck=0
 enabled=1
 
 [kickstart-crb]
 name=Rocky Linux \$releasever - kickstart - CRB
-baseurl=https://mirrors.aliyun.com/rockylinux/\$releasever/CRB/\$basearch/kickstart/
+baseurl=https://mirror.nju.edu.cn/rocky/\$releasever/CRB/\$basearch/kickstart/
 gpgcheck=0
 enabled=1
 EOF
+
 
     yum makecache || error_exit "Failed to make YUM cache"
     yum -y install yum-utils createrepo || error_exit "Failed to install required packages"
@@ -157,10 +180,20 @@ configure_extra_repos() {
     fi
 
     log "Configuring EPEL and Fish repositories..."
+    ## 阿里云源
     #safe_wget "/etc/yum.repos.d/epel.repo" "http://mirrors.aliyun.com/repo/epel-archive-9.repo"
-    yum install -y https://mirrors.aliyun.com/epel/epel-release-latest-9.noarch.rpm
-    sed -i 's|^#baseurl=https://download.example/pub|baseurl=https://mirrors.aliyun.com|' /etc/yum.repos.d/epel*
-    sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel{,-testing}.repo
+    # yum install -y https://mirrors.aliyun.com/epel/epel-release-latest-9.noarch.rpm
+    # sed -i 's|^#baseurl=https://download.example/pub|baseurl=https://mirrors.aliyun.com|' /etc/yum.repos.d/epel*
+    # sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel{,-testing}.repo
+
+    # 清华源
+    dnf install epel-release -y
+    sed -e 's!^metalink=!#metalink=!g' \
+        -e 's!^#baseurl=!baseurl=!g' \
+        -e 's!https\?://download\.fedoraproject\.org/pub/epel!https://mirrors.tuna.tsinghua.edu.cn/epel!g' \
+        -e 's!https\?://download\.example/pub/epel!https://mirrors.tuna.tsinghua.edu.cn/epel!g' \
+        -i /etc/yum.repos.d/epel{,-testing}.repo
+
     # 使epel可用
     sed -i 's|^enabled=0|enabled=1|' /etc/yum.repos.d/epel*
     yum makecache || error_exit "Failed to make YUM cache"
@@ -257,6 +290,58 @@ download_xcat() {
     mark_done "$step"
 }
 
+# 配置 confluent 源
+configure_confluent() { 
+    local step="configure_confluent"
+    if step_done "$step"; then
+        log "confluent packages already processed. Skipping."
+        return 0
+    fi
+    # rpm -ivh https://hpc.lenovo.com/yum/latest/el9/x86_64/lenovo-hpc-yum-1-1.x86_64.rpm
+
+## from page https://xcat2.github.io/confluent-docs/downloads/
+#On a system that can reach https://hpc.lenovo.com/downloads/
+#Download the package for your specific OS version
+# wget https://hpc.lenovo.com/downloads/latest-el9.tar.xz
+#or
+# wget https://hpc.lenovo.com/downloads/latest-el8.tar.xz
+#or
+# wget https://hpc.lenovo.com/downloads/latest-suse15.tar.xz
+
+    local confluent_url="https://hpc.lenovo.com/downloads"
+    local confluent_pkg_name="latest-${confluent_re}.tar.xz"
+
+    local confluent_path=$(find /root /mnt /media /run/media -name "$confluent_pkg_name" 2>/dev/null | head -n 1)
+    if [ -z "$confluent_path" ]; then
+        log "Downloading confluent core package..."
+        safe_wget_proxy "$confluent_pkg_name" "${confluent_url}/${confluent_pkg_name}"
+        confluent_path=$(find /root /mnt /media /run/media -name "$confluent_pkg_name" 2>/dev/null | head -n 1)
+    fi
+
+
+    #On your local system 
+    #Create folder for the local repository
+    mkdir -p /opt/repo/confluent_repo
+
+    #Extract the repository 
+    #tar -xf latest-el8.tar.xz -C /mnt/local_repo
+    #or
+    tar -xf ${confluent_path} -C /opt/repo/confluent_repo
+    #tar -xf latest-suse15.tar.xz -C /mnt/local_repo
+
+    #Create lenovo-hpc.repo to point to the local repository
+    createrepo /opt/repo/confluent_repo/lenovo-hpc-el9
+    sed -i 's/gpgcheck=1/gpgcheck=0/g' /opt/repo/confluent_repo/lenovo-hpc-el9/localrepo.tmpl
+    /opt/repo/confluent_repo/lenovo-hpc-el9/mklocalrepo.sh
+
+    # 重新打包
+    cd /opt/repo/confluent_repo/ && tar -cf /root/confluent.tar lenovo-hpc-el9
+
+    log "confluent packages processed and archived."
+    mark_done "$step"
+}
+
+
 # 下载依赖包并打包
 download_dependencies() {
     local step="download_dependencies"
@@ -264,6 +349,8 @@ download_dependencies() {
         log "Dependencies already downloaded. Skipping."
         return 0
     fi
+
+    cd /root 
 
     log "Downloading dependencies..."
     yum -y install --downloadonly fish clustershell glibc-static libstdc++-static || error_exit "Failed to download dependencies"
@@ -278,6 +365,12 @@ download_dependencies() {
     cat ohpc.list | xargs yum -y install --downloadonly --skip-broken
     cat ohpc-updates.list | xargs yum -y install --downloadonly --skip-broken
     yum -y install --downloadonly xCAT.x86_64
+
+    # confluent 依赖包 
+    # warning: Signature not supported. Hash algorithm SHA1 not available.
+    #update-crypto-policies --set LEGACY
+    #rpm --import /opt/repo/confluent_repo/lenovo-hpc-el9/lenovohpckey.pub
+    dnf -y install  --downloadonly lenovo-confluent confluent_osdeploy-x86_64 tftp-server
     
     cd ~  ## 返回主目录/root
     mkdir -p dep-packages
@@ -326,6 +419,7 @@ main() {
     configure_extra_repos
     download_openhpc
     download_xcat
+    configure_confluent
     download_dependencies
     restore_yum_repos
 

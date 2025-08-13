@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # OHPC官方可以参考的脚本和输入文件需要：
 # yum -y install docs-ohpc
 # 路径 /opt/ohpc/pub/doc/recipes/rocky8 下，有input.local
@@ -64,6 +64,11 @@ check_function_files() {
 
     chmod +x ./functions/*.sh
     log_info "功能脚本权限检查完成"
+
+    # 将当前位置写入环境变量文件
+    echo "## 当前位置：" >>env.text
+    echo "export admin_pwd=$(pwd)" >>env.text
+
 }
 
 # 寻找安装包文件的位置并判断其完整性
@@ -100,9 +105,11 @@ generate_env_file() {
     # FreeIPA 密码 --ds-password 12345678 --admin-password 12345678
     ipa_ds_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
     ipa_admin_password=$(openssl rand -base64 14 | tr -dc 'A-Za-z0-9')
-    echo "## FreeIPA 密码：" >>env.text
-    echo "export ipa_ds_password=${ipa_ds_password}" >>env.text
-    echo "export ipa_admin_password=${ipa_admin_password}" >>env.text
+    {
+        echo "## FreeIPA 密码："
+        echo "export ipa_ds_password=${ipa_ds_password}" 
+        echo "export ipa_admin_password=${ipa_admin_password}"
+    } >> env.text
 
 
     log_info "MariaDB root / SlurmDBD / xCAT root 密码已生成"
@@ -192,9 +199,9 @@ run_step "set_headnode" "./functions/set_headnode.sh"
 run_step "setup_network" "./functions/setup_network.sh"
 run_step "setup_ntp" "./functions/setup_ntp.sh"
 run_step "setup_sql" "./functions/setup_sql.sh"
-run_step "setup_ohpc_xcat" "./functions/setup_ohpc_xcat.sh"
-run_step "setup_slurm" "./functions/setup_slurm.sh"
 run_step "setup_freeIPA" "./functions/setup_freeIPA.sh"
+run_step "setup_ohpc_confluent" "./functions/setup_ohpc_confluent.sh"
+run_step "setup_slurm" "./functions/setup_slurm.sh"
 run_step "setup_nfs" "./functions/setup_nfs.sh"
 run_step "setup_clustershell" "./functions/setup_clustershell.sh"
 run_step "setup_devtools" "./functions/setup_devtools.sh"

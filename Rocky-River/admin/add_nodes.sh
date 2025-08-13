@@ -36,28 +36,13 @@ check_prerequisites() {
         exit 1
     fi
     
-    # 检查 dhcpd 服务是否运行
-    service_stat=$(systemctl is-active dhcpd 2>/dev/null)
-    if [ "$service_stat" != "active" ]; then
-        log_error "dhcpd 服务未运行，请先启动该服务"
-    fi
-    
-    # 检查 xCAT 环境
-    if ! command -v lsdef >/dev/null 2>&1; then
-        log_error "xCAT 命令未找到，请确保已正确安装 xCAT"
+    # 检查 confluent 环境
+    if ! command -v nodelist >/dev/null 2>&1; then
+        log_error "confluent 命令未找到，请确保已正确安装 confluent "
     fi
 }
 
-# 加载 xCAT 环境
-load_xcat_env() {
-    log_info "加载 xCAT 环境"
-    
-    if [ -f "/etc/profile.d/xcat.sh" ]; then
-        . /etc/profile.d/xcat.sh
-    else
-        log_warn "/etc/profile.d/xcat.sh 文件不存在"
-    fi
-}
+
 
 # 验证 MAC 地址格式
 check_mac_address() {
@@ -76,14 +61,14 @@ get_existing_node_info() {
     log_info "获取现有节点信息"
     
     # 获取现有 MAC 地址
-    existing_macs=($(lsdef -t node -i mac | grep -i mac | sed 's/mac=//g' | sed 's/ //g'))
+    existing_macs=($(nodeattrib  compute net.hwaddr | awk '{print $3}'))
     
     # 获取现有 IP 地址
-    existing_ips=($(lsdef -t node -i ip | grep -i ip= | sed 's/ip=//g' | sed 's/ //g'))
+    existing_ips=($(nodeattrib  compute net.ipv4_address | awk '{print $3}'))
     existing_ips+=(${sms_ip})
     
     # 获取现有节点列表
-    existing_nodelist=($(nodels))
+    existing_nodelist=($(nodelist))
 }
 
 # 处理节点列表文件
@@ -285,7 +270,7 @@ create_node_definitions() {
         done
 
         ## 获取已有节点名称列表
-        existing_nodename_pool=($(nodels | grep -E "${compute_prefix}[0-9]+"))
+        existing_nodename_pool=($(nodelist | grep -E "${compute_prefix}[0-9]+"))
 
         # 过滤掉已有节点名称
         valid_nodenames=($(array_diff sub_nodename_pool existing_nodename_pool ))
@@ -304,16 +289,22 @@ create_node_definitions() {
 
         echo "${valid_add_nodenames[i]}" "${valid_add_ips[i]}" "${valid_macs[i]}"
 
-        mkdef -t node "${valid_add_nodenames[i]}" groups=compute,all ip="${valid_add_ips[i]}" mac="${valid_macs[i]}" netboot=xnba arch=x86_64 >>${0##*/}.log 2>&1
+        # mkdef -t node "${valid_add_nodenames[i]}" groups=compute,all ip="${valid_add_ips[i]}" mac="${valid_macs[i]}" netboot=xnba arch=x86_64 >>${0##*/}.log 2>&1
+
+        nodedefine "${valid_add_nodenames[i]}" groups=everything,compute net.hwaddr="${valid_macs[i]}" net.ipv4_address="${valid_add_ips[i]}"
+
         if [ $? -ne 0 ]; then
             log_error "创建节点 ${valid_add_nodenames[i]} 失败"
         fi
         
-        chdef "${valid_add_nodenames[i]}" -p postbootscripts=mypostboot >>${0##*/}.log 2>&1
-        if [ $? -ne 0 ]; then
-            log_warn "设置节点 ${valid_add_nodenames[i]} 的 postbootscripts 失败"
-        fi
-        
+        confluent2hosts -a "${valid_add_nodenames[i]}" 
+
+        local default_deploy_config=$(osdeploy list| grep default | sed 's/ //g')
+        local mydefinition_config=${default_deploy_config/default/mydefinition}
+
+        # 设置节点系统分发
+        nodedeploy -n "${valid_add_nodenames[i]}"  -p  ${mydefinition_config}
+
         echo "NodeName=${valid_add_nodenames[i]} Sockets=${Sockets} CoresPerSocket=${CoresPerSocket} \
         ThreadsPerCore=${ThreadsPerCore} State=UNKNOWN" >>/etc/slurm/slurm.conf
 
@@ -327,51 +318,15 @@ create_node_definitions() {
 # 完成网络服务配置
 complete_network_services() {
     log_info "完成网络服务配置"
-    
+
+    systemctl restart named 
+
     new_node_name_xcat=$(collapse_slurm_node_list "${valid_add_nodenames[@]}")
 
-    makehosts "$new_node_name_xcat" >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "执行 makehosts 失败"
-    fi
-    
-    makedhcp "$new_node_name_xcat" >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "执行 makedhcp 失败"
-    fi
-    
-    # 更新 DNS 配置
-    # . /etc/profile.d/xcat.sh
-    # source env.text
-    # makedns -n >>${0##*/}.log 2>&1 ## 这个会全更新 named.conf 文件
-    # cat db.ipa.backup >> /var/named/db.${domain_name}
-    makedns "$new_node_name_xcat" >>${0##*/}.log 2>&1
-    # 这里只 makedns 也可以，它只依据/etc/hosts 文件更新内容，不会删除其他记录
-    if [ $? -ne 0 ]; then
-        log_warn "执行 makedns 失败"
-    fi
-    systemctl restart named 
+    # 记录新安装的节点
+    echo "$new_node_name_xcat" >new_install.nodes    
 }
 
-# 设置节点系统分发
-setup_node_distribution() {
-    log_info "设置节点系统分发"
-    
-    image_list=($(lsdef -t osimage | grep install | grep compute))
-    if [ -z "${image_list[0]}" ]; then
-        log_error "未找到可用的 osimage"
-    fi
-    
-    image_choose="${image_list[0]}"
-    # nodeset ${compute_prefix}${node_max} osimage=${image_choose}
-    nodeset $new_node_name_xcat osimage=${image_choose} >>${0##*/}.log 2>&1
-    if [ $? -ne 0 ]; then
-        log_warn "设置节点系统分发失败"
-    fi
-    
-    # 记录新安装的节点
-    echo "$new_node_name_xcat" >new_install.nodes
-}
 
 
 # 更新 Slurm 分区配置信息
@@ -436,7 +391,7 @@ update_slurm_config() {
 # 更新 ClusterShell 配置
 update_clustershell_config() {
     log_info "更新 ClusterShell 配置"
-    local allnode_list=($(nodels))
+    local allnode_list=($(nodelist))
     local allnode_list_collapse=$(collapse_slurm_node_list "${allnode_list[@]}")
     perl -ni -e "if(/^compute/){print \"compute: ${allnode_list_collapse}\n\"}else{print}" /etc/clustershell/groups.d/local.cfg
     if [ $? -ne 0 ]; then
@@ -451,7 +406,7 @@ main() {
     
     load_env
     check_required_vars
-    load_xcat_env
+ 
     check_prerequisites
     
     get_existing_node_info
@@ -465,8 +420,7 @@ main() {
     create_node_definitions
 
     complete_network_services
-    setup_node_distribution
-    
+
     update_slurm_config
     update_clustershell_config
 
