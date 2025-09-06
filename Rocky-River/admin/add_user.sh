@@ -45,7 +45,7 @@ add_user() {
     INITIAL_PASSWORD=$(openssl rand -base64 12 | tr -d '=+/' | cut -c1-12)
 
     # 添加FreeIPA用户
-    ipa user-add "$USERNAME" --first="$USERNAME" --last="User" --password <<EOF
+    ipa user-add --shell=/bin/bash "$USERNAME" --first="$USERNAME" --last="User" --password <<EOF
 $INITIAL_PASSWORD
 $INITIAL_PASSWORD
 EOF
