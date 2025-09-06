@@ -52,7 +52,9 @@ install_ohpc_confluent() {
     mkdir -p /etc/confluent/tls
     openssl pkcs12 -in /root/cacert.p12 -nodes -nocerts -passin pass:${ipa_ds_password} -out /etc/confluent/tls/cakey.pem
     chown confluent:root /etc/confluent/tls/cakey.pem 
-    cp /etc/confluent/tls/cacert.pem{,.bak}
+    if [ -e /etc/confluent/tls/cakey.pem ]; then
+        cp /etc/confluent/tls/cacert.pem{,.bak}
+    fi
     /bin/cp /etc/ipa/ca.crt /etc/confluent/tls/cacert.pem
     ## 系统分发初始化
     osdeploy initialize -a -p -u -s -t >>.install_logs/${0##*/}.log 2>&1
