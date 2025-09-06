@@ -77,7 +77,7 @@ start_nfs_services() {
     
     systemctl restart nfs-server >>.install_logs/${0##*/}.log 2>&1
     if [ $? -ne 0 ]; then
-        log_error "重启 NFS 服务失败"
+        log_error "重启 NFS 服务失败"  ## 这里提示了一次错误，是否应该等待几秒再执行重启服务？
     fi
     
     systemctl enable nfs-server >>.install_logs/${0##*/}.log 2>&1

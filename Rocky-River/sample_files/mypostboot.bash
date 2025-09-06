@@ -80,10 +80,11 @@ configure_slurm() {
     echo "SLURMD_OPTIONS=\"--conf-server ${sms_ip}\"" >/etc/sysconfig/slurmd
 }
 
-# 设置时区
+# 设置时区与时间同步服务
 set_timezone() {
     log_info "设置时区为 Asia/Shanghai"
     timedatectl set-timezone Asia/Shanghai
+    echo "server ${sms_ip} iburst" >> /etc/chrony.conf
 }
 
 # 配置Autofs
