@@ -86,6 +86,7 @@ NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
 # 部署过程和存在的问题
 
 - [x] （该问题已经解决，@ 2025年7月24日 ）注意，为安全起见，实际部署中请修改数据库root密码，默认是‘78g*tw23.ysq’（可以在安装前替换脚本中的密码，或者安装完成之后修改）。slurmdbd安装时添加了slurmdbd数据库用户，密码为‘slurmdbd1234’,修改此用户密码时/etc/slurm/slurmdbd.conf文件存储的密码也要修改（这个文件对普通用户是不可读写的）。 
+- [ ] freeIPA 配置导致DNS解析有问题？ 无法ping 域名，但可直接ping ip, 用nmcli 指定dns 也不行，执行 ipa dnsconfig-mod --forwarder=114.114.114.114 --forwarder=180.76.76.76 --forward-policy=only 之后还是无法解析互联网域名，执行ipa-dns-install --forwarder=114.114.114.114 --forwarder=180.76.76.76 也不管用，手动设置/etc/named/xx.conf 添加forwarders 也不行，不知道是不是dhcp服务器下放的dns有问题，可以先看看虚拟机里边的情况，我看了虚拟机可以正常解析域名（所以不知道什么原因）。最后整了个临时方法，在/etc/resolv.conf 添加 nameserver 180.76.76.76 , 暂时没别的毛病。
 
 ## 常用操作
 1. slurm 服务相关<br>
