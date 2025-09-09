@@ -78,6 +78,8 @@ configure_slurm() {
 set_timezone() {
     log_info "设置时区为 Asia/Shanghai"
     timedatectl set-timezone Asia/Shanghai
+    # 配置chrony
+    echo "server ${sms_ip} iburst" >> /etc/chrony.conf
 }
 
 # 配置Autofs
