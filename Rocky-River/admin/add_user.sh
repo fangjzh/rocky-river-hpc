@@ -23,6 +23,25 @@ check_arguments() {
     USERNAME="$1"
 }
 
+# 检查root 用户授权是否过期
+check_root_authorized() {
+    log_info "检查root 用户是否被授权"
+    
+    # 获取 root 账号信息
+    USER_INFO=$(ipa user-show root 2>&1) 
+    if [ $? -ne 0 ]; then
+        if echo "$USER_INFO" | grep -q "Ticket expired"; then
+            log_info "root 用户的授权已过期，重新授权"
+            echo "${ipa_admin_password}" | kinit admin
+        else
+            echo "错误: $USER_INFO"
+            exit 3
+        fi
+    fi
+    
+
+}
+
 # 检查用户是否已存在
 check_user_exists() {
     log_info "检查用户 $USERNAME 是否已存在"
@@ -95,6 +114,9 @@ main() {
     
     load_env
     check_arguments "$@"
+    
+    check_root_authorized
+
     check_user_exists
     add_user
 
