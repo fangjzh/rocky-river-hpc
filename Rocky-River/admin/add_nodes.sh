@@ -377,7 +377,7 @@ update_slurm_config() {
     local node_list_collapse=""
     if [ "$partition_choice" -eq 0 ] ; then
         node_list_collapse=$(collapse_slurm_node_list "${valid_add_nodenames[@]}")
-        echo "PartitionName=$selected_partition Nodes=$node_list_collapse Default=YES MaxTime=720:00:00 State=UP Oversubscribe=EXCLUSIVE" >>/etc/slurm/slurm.conf
+        echo "PartitionName=$selected_partition Nodes=$node_list_collapse Default=YES MaxTime=720:00:00 State=UP " >>/etc/slurm/slurm.conf
     else
         local existing_node_list=($(echo "${partition_info[$((partition_choice-1))]}" | cut -d':' -f2 | sed 's/,/\ /g'))
         local all_node_list=("${existing_node_list[@]}" "${valid_add_nodenames[@]}")

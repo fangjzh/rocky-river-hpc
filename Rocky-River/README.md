@@ -31,51 +31,49 @@ with rocky linux 9.6 （xcat or confluent）提取码: 请联系作者  <br>
 1. 安装Rocky Linux<br>
 将所有文件存入优盘，然后从优盘启动并Rocky Linux，安装Rocky Linux
 
-1. 安装fuse-exfat<br>
+2. 安装fuse-exfat<br>
 操作系统安装完成之后
 ```bash
 rpm -i fuse-exfat-1.3.0-3.el8.x86_64.rpm
 ```
-1. 挂载优盘<br>
+3. 挂载优盘<br>
 （可以挂载到/root，/mnt，/media，/run/media的子目录下），类似这样的
 ```bash
 mount /dev/sdb1 /mnt/usb  ###按实际情况修改
 ```
 
-1. 将Rocky-River文件夹拷贝到 /root 目录，然后<br>
+4. 将Rocky-River文件夹拷贝到 /root 目录，然后<br>
 ```bash
 cp -r /mnt/usb/xxx/Rocky-River /root/   ###按实际情况修改
 cd /root/Rocky-River
 ```
 在root目录进行以下操作
 
-1.  执行ini.sh进行初始化设置<br>
+5.  执行ini.sh进行初始化设置<br>
 ```bash
 sh ini.sh
 ```
 这里有些交互选项，按要求填写即可。
 
-1. 执行Install.sh进行安装<br>
+6. 执行Install.sh进行安装<br>
 成功产生 Install.sh之后，执行
 ```bash
 ./Install.sh 
 ```
 进行安装。
 
-1.  添加计算节点<br>
+7.  添加计算节点<br>
 - 先查到计算节点的MAC地址，然后写到node_add.list里边，可以写多个MAC(每行一个)
 - 运行admin/add_nodes.sh 注册计算节点
 - 计算节点从pxe启动，成功获得IP之后会自动安装操作系统和相关软件，首次启动会进行配置，需要等待几分钟时间才能正常登录
-- 计算节点完成安装之后，需要执行admin/after_add_nodes.sh 将munge key拷贝到计算节点
 
-1.    修改slurm配置文件 (这个现在可以自动完成了，但并非很灵活，且可能有bug @ 2025年7月27日)
-修改 /etc/slurm/slurm.conf，主要是修改节点核数，根据实际情况修改，比如：<br>
-NodeName=cnode00[1-3] Sockets=2 CoresPerSocket=32 ThreadsPerCore=1 State=UNKNOWN
-意思是这些节点都具有两块CPU，每块CPU有32个物理核心，每个物理核心允许单个线程。另外要修改partition的时间限制。
-完成之后需要重启slurmctld服务。
+8.    修改slurm配置文件 (这个现在可以自动完成了，但并非很灵活，且可能有bug @ 2025年7月27日)
+脚本已经完善:(计算节点首次启动侯等待一小段时间再执行)
+bash ./admin/after_add_nodes.sh
 
-1.     添加用户<br>
-脚本还没写，用 adduser 添加用户之后，执行 make -C /var/yp 同步用户
+9.     添加用户<br>
+脚本已经完善:
+bash ./admin/add_user.sh
 
 ## 存在问题
 1. 同时多个节点安装时会出现某个节点root无密码登录出错，但是普通用户正常。<br>
