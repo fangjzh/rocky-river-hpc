@@ -81,10 +81,14 @@ bash ./admin/add_user.sh
 实际部署估计不会遇到这个问题。
 2. 设置计算节点内网时，要避免和企业/校园内网网段重叠，否则会产生不可预料的问题，比如无法上网，无法拨号，无法ssh连接等
 
-# 部署过程和存在的问题
+## 部署过程和存在的问题
 
 - [x] （该问题已经解决，@ 2025年7月24日 ）注意，为安全起见，实际部署中请修改数据库root密码，默认是‘78g*tw23.ysq’（可以在安装前替换脚本中的密码，或者安装完成之后修改）。slurmdbd安装时添加了slurmdbd数据库用户，密码为‘slurmdbd1234’,修改此用户密码时/etc/slurm/slurmdbd.conf文件存储的密码也要修改（这个文件对普通用户是不可读写的）。 
 - [ ] freeIPA 配置导致DNS解析有问题？ 无法ping 域名，但可直接ping ip, 用nmcli 指定dns 也不行，执行 ipa dnsconfig-mod --forwarder=114.114.114.114 --forwarder=180.76.76.76 --forward-policy=only 之后还是无法解析互联网域名，执行ipa-dns-install --forwarder=114.114.114.114 --forwarder=180.76.76.76 也不管用，手动设置/etc/named/xx.conf 添加forwarders 也不行，不知道是不是dhcp服务器下放的dns有问题，可以先看看虚拟机里边的情况，我看了虚拟机可以正常解析域名（所以不知道什么原因）。最后整了个临时方法，在/etc/resolv.conf 添加 nameserver 180.76.76.76 , 暂时没别的毛病。
+
+## Tips
+老版本中（最新脚本中以去除这个选项），slurm.conf 中有Oversubscribe=EXCLUSIVE这个选项，这会导致任务独占节点，可在admin/add_nodes.sh删除这个参数（或每次在slurm.conf中手动注释这个参数）
+
 
 ## 常用操作
 1. slurm 服务相关<br>
